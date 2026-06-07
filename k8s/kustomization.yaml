@@ -8,4 +8,5 @@ resources:
   - middleware/mongodb.yaml
   - middleware/minio.yaml
   - services/microservices.yaml
+  - base/minio-ingress.yaml
   - base/ingress.yaml

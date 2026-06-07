@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     mongodb_password: str = ""
 
     minio_endpoint: str = "zuoti-minio:9000"
+    minio_public_base_url: str = "https://www.njwjxy.cn:30443/zuoti-minio"
     minio_access_key: str = ""
     minio_secret_key: str = ""
 

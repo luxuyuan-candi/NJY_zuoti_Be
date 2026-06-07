@@ -15,3 +15,4 @@ data:
   MONGODB_PORT: "27017"
   MONGODB_DATABASE: "zuoti_questions"
   MINIO_ENDPOINT: "zuoti-minio:9000"
+  MINIO_PUBLIC_BASE_URL: "https://www.njwjxy.cn:30443/zuoti-minio"

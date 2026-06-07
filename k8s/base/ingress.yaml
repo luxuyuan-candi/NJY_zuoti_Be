@@ -4,6 +4,7 @@ metadata:
   name: zuoti-ingress
   namespace: zuoti
 spec:
+  ingressClassName: nginx
   rules:
     - host: www.njwjxy.cn
       http:
@@ -176,3 +177,7 @@ spec:
                 name: zuoti-admin-service
                 port:
                   number: 80
+  tls:
+    - hosts:
+        - www.njwjxy.cn
+      secretName: ingress-tls

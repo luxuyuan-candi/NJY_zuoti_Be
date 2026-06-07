@@ -9,4 +9,5 @@ resources:
   - middleware/minio.yaml
   - services/microservices.yaml
   - base/minio-ingress.yaml
+  - base/minio-console-ingress.yaml
   - base/ingress.yaml

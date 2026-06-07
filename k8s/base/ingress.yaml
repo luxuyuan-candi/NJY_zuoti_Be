@@ -1,0 +1,178 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: zuoti-ingress
+  namespace: zuoti
+spec:
+  rules:
+    - host: www.njwjxy.cn
+      http:
+        paths:
+          - path: /api/miniapp/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-auth-service
+                port:
+                  number: 80
+          - path: /api/admin/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-auth-service
+                port:
+                  number: 80
+          - path: /api/miniapp/user
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-user-service
+                port:
+                  number: 80
+          - path: /api/admin/users
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-user-service
+                port:
+                  number: 80
+          - path: /api/miniapp/content
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-content-service
+                port:
+                  number: 80
+          - path: /api/admin/content
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-content-service
+                port:
+                  number: 80
+          - path: /api/miniapp/files
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-content-service
+                port:
+                  number: 80
+          - path: /api/admin/files
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-content-service
+                port:
+                  number: 80
+          - path: /api/miniapp/banks
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-bank-service
+                port:
+                  number: 80
+          - path: /api/admin/banks
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-bank-service
+                port:
+                  number: 80
+          - path: /api/admin/chapters
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-bank-service
+                port:
+                  number: 80
+          - path: /api/miniapp/questions
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-question-service
+                port:
+                  number: 80
+          - path: /api/admin/questions
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-question-service
+                port:
+                  number: 80
+          - path: /api/miniapp/practice
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-practice-service
+                port:
+                  number: 80
+          - path: /api/miniapp/records
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-practice-service
+                port:
+                  number: 80
+          - path: /api/miniapp/exams
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-exam-service
+                port:
+                  number: 80
+          - path: /api/admin/papers
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-exam-service
+                port:
+                  number: 80
+          - path: /api/miniapp/ranking
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-ranking-service
+                port:
+                  number: 80
+          - path: /api/admin/gamification
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-ranking-service
+                port:
+                  number: 80
+          - path: /api/miniapp/feedback
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-feedback-service
+                port:
+                  number: 80
+          - path: /api/admin/feedback
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-feedback-service
+                port:
+                  number: 80
+          - path: /api/admin/dashboard
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-admin-service
+                port:
+                  number: 80
+          - path: /api/admin/settings
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-admin-service
+                port:
+                  number: 80
+          - path: /api/admin/statistics
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-admin-service
+                port:
+                  number: 80

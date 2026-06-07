@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zuoti-mysql
+  namespace: zuoti
+spec:
+  serviceName: zuoti-mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zuoti-mysql
+  template:
+    metadata:
+      labels:
+        app: zuoti-mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.4
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: zuoti-config
+                  key: MYSQL_DATABASE
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: zuoti-app-secret
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zuoti-app-secret
+                  key: MYSQL_PASSWORD
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zuoti-app-secret
+                  key: MYSQL_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zuoti-mysql
+  namespace: zuoti
+spec:
+  selector:
+    app: zuoti-mysql
+  ports:
+    - port: 3306
+      targetPort: 3306

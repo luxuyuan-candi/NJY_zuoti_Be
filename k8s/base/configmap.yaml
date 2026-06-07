@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: zuoti-config
+  namespace: zuoti
+data:
+  APP_ENV: "prod"
+  WECHAT_APP_ID: "wxb88840bf78c6cd4d"
+  MYSQL_HOST: "zuoti-mysql"
+  MYSQL_PORT: "3306"
+  MYSQL_DATABASE: "zuoti"
+  REDIS_HOST: "zuoti-redis"
+  REDIS_PORT: "6379"
+  MONGODB_HOST: "zuoti-mongodb"
+  MONGODB_PORT: "27017"
+  MONGODB_DATABASE: "zuoti_questions"
+  MINIO_ENDPOINT: "zuoti-minio:9000"

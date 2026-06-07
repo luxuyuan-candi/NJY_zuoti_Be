@@ -1,0 +1,499 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zuoti-auth-service
+  namespace: zuoti
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zuoti-auth-service
+  template:
+    metadata:
+      labels:
+        app: zuoti-auth-service
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/luxuyuan-candi/njy-zuoti-be:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SERVICE_MODULE
+              value: auth
+          envFrom:
+            - configMapRef:
+                name: zuoti-config
+            - secretRef:
+                name: zuoti-app-secret
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zuoti-auth-service
+  namespace: zuoti
+spec:
+  selector:
+    app: zuoti-auth-service
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zuoti-user-service
+  namespace: zuoti
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zuoti-user-service
+  template:
+    metadata:
+      labels:
+        app: zuoti-user-service
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/luxuyuan-candi/njy-zuoti-be:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SERVICE_MODULE
+              value: user
+          envFrom:
+            - configMapRef:
+                name: zuoti-config
+            - secretRef:
+                name: zuoti-app-secret
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zuoti-user-service
+  namespace: zuoti
+spec:
+  selector:
+    app: zuoti-user-service
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zuoti-content-service
+  namespace: zuoti
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zuoti-content-service
+  template:
+    metadata:
+      labels:
+        app: zuoti-content-service
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/luxuyuan-candi/njy-zuoti-be:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SERVICE_MODULE
+              value: content
+          envFrom:
+            - configMapRef:
+                name: zuoti-config
+            - secretRef:
+                name: zuoti-app-secret
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zuoti-content-service
+  namespace: zuoti
+spec:
+  selector:
+    app: zuoti-content-service
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zuoti-bank-service
+  namespace: zuoti
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zuoti-bank-service
+  template:
+    metadata:
+      labels:
+        app: zuoti-bank-service
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/luxuyuan-candi/njy-zuoti-be:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SERVICE_MODULE
+              value: bank
+          envFrom:
+            - configMapRef:
+                name: zuoti-config
+            - secretRef:
+                name: zuoti-app-secret
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zuoti-bank-service
+  namespace: zuoti
+spec:
+  selector:
+    app: zuoti-bank-service
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zuoti-question-service
+  namespace: zuoti
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zuoti-question-service
+  template:
+    metadata:
+      labels:
+        app: zuoti-question-service
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/luxuyuan-candi/njy-zuoti-be:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SERVICE_MODULE
+              value: question
+          envFrom:
+            - configMapRef:
+                name: zuoti-config
+            - secretRef:
+                name: zuoti-app-secret
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zuoti-question-service
+  namespace: zuoti
+spec:
+  selector:
+    app: zuoti-question-service
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zuoti-practice-service
+  namespace: zuoti
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zuoti-practice-service
+  template:
+    metadata:
+      labels:
+        app: zuoti-practice-service
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/luxuyuan-candi/njy-zuoti-be:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SERVICE_MODULE
+              value: practice
+          envFrom:
+            - configMapRef:
+                name: zuoti-config
+            - secretRef:
+                name: zuoti-app-secret
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zuoti-practice-service
+  namespace: zuoti
+spec:
+  selector:
+    app: zuoti-practice-service
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zuoti-exam-service
+  namespace: zuoti
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zuoti-exam-service
+  template:
+    metadata:
+      labels:
+        app: zuoti-exam-service
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/luxuyuan-candi/njy-zuoti-be:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SERVICE_MODULE
+              value: exam
+          envFrom:
+            - configMapRef:
+                name: zuoti-config
+            - secretRef:
+                name: zuoti-app-secret
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zuoti-exam-service
+  namespace: zuoti
+spec:
+  selector:
+    app: zuoti-exam-service
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zuoti-ranking-service
+  namespace: zuoti
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zuoti-ranking-service
+  template:
+    metadata:
+      labels:
+        app: zuoti-ranking-service
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/luxuyuan-candi/njy-zuoti-be:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SERVICE_MODULE
+              value: ranking
+          envFrom:
+            - configMapRef:
+                name: zuoti-config
+            - secretRef:
+                name: zuoti-app-secret
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zuoti-ranking-service
+  namespace: zuoti
+spec:
+  selector:
+    app: zuoti-ranking-service
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zuoti-feedback-service
+  namespace: zuoti
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zuoti-feedback-service
+  template:
+    metadata:
+      labels:
+        app: zuoti-feedback-service
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/luxuyuan-candi/njy-zuoti-be:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SERVICE_MODULE
+              value: feedback
+          envFrom:
+            - configMapRef:
+                name: zuoti-config
+            - secretRef:
+                name: zuoti-app-secret
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zuoti-feedback-service
+  namespace: zuoti
+spec:
+  selector:
+    app: zuoti-feedback-service
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zuoti-admin-service
+  namespace: zuoti
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zuoti-admin-service
+  template:
+    metadata:
+      labels:
+        app: zuoti-admin-service
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/luxuyuan-candi/njy-zuoti-be:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SERVICE_MODULE
+              value: admin
+          envFrom:
+            - configMapRef:
+                name: zuoti-config
+            - secretRef:
+                name: zuoti-app-secret
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zuoti-admin-service
+  namespace: zuoti
+spec:
+  selector:
+    app: zuoti-admin-service
+  ports:
+    - port: 80
+      targetPort: 8000

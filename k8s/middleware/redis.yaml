@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zuoti-redis
+  namespace: zuoti
+spec:
+  serviceName: zuoti-redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zuoti-redis
+  template:
+    metadata:
+      labels:
+        app: zuoti-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.4
+          ports:
+            - containerPort: 6379
+          command: ["sh", "-c"]
+          args:
+            - redis-server --appendonly yes --requirepass "$REDIS_PASSWORD"
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: zuoti-app-secret
+                  key: REDIS_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zuoti-redis
+  namespace: zuoti
+spec:
+  selector:
+    app: zuoti-redis
+  ports:
+    - port: 6379
+      targetPort: 6379

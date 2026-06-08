@@ -30,6 +30,13 @@ spec:
                 name: zuoti-user-service
                 port:
                   number: 80
+          - path: /api/miniapp/users
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-user-service
+                port:
+                  number: 80
           - path: /api/admin/users
             pathType: Prefix
             backend:

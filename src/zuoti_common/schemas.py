@@ -22,6 +22,10 @@ class UpdateUserProfileRequest(BaseModel):
     avatar_url: str | None = None
 
 
+class UpdateUserRoleRequest(BaseModel):
+    role: str = Field(min_length=1, max_length=32)
+
+
 class FeedbackRequest(BaseModel):
     content: str = Field(min_length=1, max_length=500)
     category: str = "general"

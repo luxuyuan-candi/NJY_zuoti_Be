@@ -10,6 +10,13 @@ from .config import get_settings
 
 
 PUBLIC_BUCKET = "public-assets"
+ROLE_LABELS = {
+    "GUEST": "游客",
+    "USER": "普通用户",
+    "ADMIN": "管理员",
+    "SUPER_ADMIN": "超级管理员",
+}
+MANAGER_ROLES = {"ADMIN", "SUPER_ADMIN"}
 
 
 def token_for_openid(openid: str) -> str:
@@ -34,8 +41,8 @@ def ensure_user(openid: str, nickname: str | None = None, avatar_url: str | None
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO users (id, openid, nickname, avatar_url, status)
-                VALUES (%s, %s, %s, %s, 'AUTHORIZED')
+                INSERT INTO users (id, openid, nickname, avatar_url, role, status)
+                VALUES (%s, %s, %s, %s, 'USER', 'AUTHORIZED')
                 ON DUPLICATE KEY UPDATE
                   nickname = COALESCE(NULLIF(VALUES(nickname), ''), nickname),
                   avatar_url = COALESCE(NULLIF(VALUES(avatar_url), ''), avatar_url),
@@ -51,7 +58,7 @@ def get_user_by_openid(openid: str) -> dict:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT id, openid, nickname, avatar_url, email, status, created_at, updated_at
+                SELECT id, openid, nickname, avatar_url, email, role, status, created_at, updated_at
                 FROM users
                 WHERE openid = %s
                 """,
@@ -89,6 +96,51 @@ def update_user_profile(
                 (nickname or None, email or None, saved_avatar_url or None, openid),
             )
     return get_user_by_openid(openid)
+
+
+def list_users_for_manager(manager_openid: str) -> list[dict]:
+    manager = get_user_by_openid(manager_openid)
+    if manager["role"] not in MANAGER_ROLES:
+        raise PermissionError("user role cannot manage users")
+
+    with create_mysql_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, openid, nickname, avatar_url, email, role, status, created_at, updated_at
+                FROM users
+                ORDER BY updated_at DESC, created_at DESC
+                """
+            )
+            users = cursor.fetchall()
+    return [format_user(user) for user in users]
+
+
+def update_user_role(manager_openid: str, target_openid: str, role: str) -> dict:
+    manager = get_user_by_openid(manager_openid)
+    manager_role = manager["role"]
+    normalized_role = normalize_role(role)
+
+    if manager_role not in MANAGER_ROLES:
+        raise PermissionError("user role cannot manage users")
+    if manager_openid == target_openid:
+        raise PermissionError("cannot change current user role")
+    if manager_role == "ADMIN" and normalized_role not in {"GUEST", "USER"}:
+        raise PermissionError("admin can only assign guest or normal user roles")
+    if manager_role == "SUPER_ADMIN" and normalized_role == "SUPER_ADMIN":
+        raise PermissionError("super admin role must be maintained out of band")
+
+    with create_mysql_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE users
+                SET role = %s
+                WHERE openid = %s
+                """,
+                (normalized_role, target_openid),
+            )
+    return get_user_by_openid(target_openid)
 
 
 def save_avatar(openid: str, avatar_base64: str, content_type: str | None, avatar_ext: str | None) -> str:
@@ -133,13 +185,30 @@ def ensure_public_bucket(client) -> None:
 
 
 def format_user(user: dict) -> dict:
+    role = normalize_role(user.get("role") or "USER")
     return {
         "id": user["id"],
         "openid": user["openid"],
         "nickname": user.get("nickname") or "",
         "avatarUrl": user.get("avatar_url") or "",
         "email": user.get("email") or "",
+        "role": role,
+        "roleLabel": ROLE_LABELS[role],
         "status": user.get("status") or "REGISTERED",
         "authorized": True,
         "rank": {"total": 128, "weekly": 16, "currentScore": 2680},
     }
+
+
+def normalize_role(role: str) -> str:
+    normalized = (role or "USER").strip().upper()
+    aliases = {
+        "VISITOR": "GUEST",
+        "NORMAL": "USER",
+        "NORMAL_USER": "USER",
+        "SUPERADMIN": "SUPER_ADMIN",
+    }
+    normalized = aliases.get(normalized, normalized)
+    if normalized not in ROLE_LABELS:
+        return "USER"
+    return normalized

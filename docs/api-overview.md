@@ -13,6 +13,8 @@ https://www.njwjxy.cn:30443
 | auth-service | POST | `/api/miniapp/auth/login` | 微信 code 换取 openid，自动创建 / 更新用户身份并返回 token |
 | user-service | GET | `/api/miniapp/user/me` | 当前用户信息、授权状态、排名摘要 |
 | user-service | PUT | `/api/miniapp/user/me` | 保存当前用户昵称、邮箱、头像；头像写入 MinIO |
+| user-service | GET | `/api/miniapp/users` | 管理员或超级管理员查看人员列表 |
+| user-service | PUT | `/api/miniapp/users/{openid}/role` | 管理员或超级管理员配置用户角色 |
 | content-service | GET | `/api/miniapp/content/home` | 首页教学视频、推广内容、公告 |
 | content-service | GET | `/api/miniapp/files/{file_id}` | 返回 MinIO 公开资源 URL |
 | bank-service | GET | `/api/miniapp/banks` | 已授权题库列表 |
@@ -57,6 +59,8 @@ https://www.njwjxy.cn:30443
     "nickname": "",
     "email": "",
     "avatarUrl": "",
+    "role": "USER",
+    "roleLabel": "普通用户",
     "status": "AUTHORIZED"
   }
 }
@@ -88,6 +92,8 @@ Authorization: Bearer miniapp-openid:{openid}
   "nickname": "用户昵称",
   "email": "user@example.com",
   "avatarUrl": "https://www.njwjxy.cn:30443/zuoti-minio/public-assets/users/{openid}/avatar-xxx.png",
+  "role": "USER",
+  "roleLabel": "普通用户",
   "status": "AUTHORIZED"
 }
 ```
@@ -129,6 +135,8 @@ Authorization: Bearer miniapp-openid:{openid}
   "nickname": "用户昵称",
   "email": "user@example.com",
   "avatarUrl": "https://www.njwjxy.cn:30443/zuoti-minio/public-assets/users/{openid}/avatar-xxx.png",
+  "role": "USER",
+  "roleLabel": "普通用户",
   "status": "AUTHORIZED"
 }
 ```
@@ -141,6 +149,60 @@ Authorization: Bearer miniapp-openid:{openid}
 | 邮箱格式错误 | `400` | 前端保留表单并提示修改 |
 | 头像类型或大小不合法 | `400` | 前端保留预览并提示更换头像 |
 | MinIO 上传失败 | `500` | 不覆盖旧头像 URL，前端允许重试 |
+
+### GET `/api/miniapp/users`
+
+用途：小程序“人员管理”页面获取用户列表。
+
+权限：
+
+- `ADMIN` 和 `SUPER_ADMIN` 可访问。
+- `GUEST` 和 `USER` 访问返回 `403`。
+
+响应体：
+
+```json
+[
+  {
+    "id": "{openid}",
+    "openid": "{openid}",
+    "nickname": "用户昵称",
+    "email": "user@example.com",
+    "avatarUrl": "https://www.njwjxy.cn:30443/zuoti-minio/public-assets/users/{openid}/avatar-xxx.png",
+    "role": "USER",
+    "roleLabel": "普通用户",
+    "status": "AUTHORIZED"
+  }
+]
+```
+
+### PUT `/api/miniapp/users/{openid}/role`
+
+用途：管理员或超级管理员配置用户角色。
+
+请求体：
+
+```json
+{
+  "role": "USER"
+}
+```
+
+角色值：
+
+| role | 展示 |
+| --- | --- |
+| `GUEST` | 游客 |
+| `USER` | 普通用户 |
+| `ADMIN` | 管理员 |
+| `SUPER_ADMIN` | 超级管理员 |
+
+权限规则：
+
+- `SUPER_ADMIN` 可以将其他用户设置为 `ADMIN`、`USER`、`GUEST`。
+- `ADMIN` 只能将其他用户设置为 `USER`、`GUEST`。
+- 小程序人员管理接口不允许授予 `SUPER_ADMIN`。
+- 不允许用户修改自己的角色。
 
 ## 后台接口
 

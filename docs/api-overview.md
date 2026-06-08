@@ -32,6 +32,116 @@ https://www.njwjxy.cn:30443
 | ranking-service | GET | `/api/miniapp/ranking/medals` | 用户奖牌 |
 | feedback-service | POST | `/api/miniapp/feedback` | 提交反馈 |
 
+## 小程序身份资料接口契约
+
+### POST `/api/miniapp/auth/login`
+
+用途：小程序通过 `wx.login` 获取 code 后，提交给后端换取 `openid` 并建立本地业务身份。
+
+请求体：
+
+```json
+{
+  "code": "微信 wx.login 返回的 code"
+}
+```
+
+响应体：
+
+```json
+{
+  "token": "miniapp-openid:{openid}",
+  "user": {
+    "id": "{openid}",
+    "openid": "{openid}",
+    "nickname": "",
+    "email": "",
+    "avatarUrl": "",
+    "status": "AUTHORIZED"
+  }
+}
+```
+
+规则：
+
+- 前端不得自行生成或传入 openid。
+- 后端通过微信 `jscode2session` 获取 openid。
+- 如果 `users` 表中不存在该 openid，后端自动创建用户。
+- 当前第一阶段 token 为简化格式，后续应替换为签名 JWT 或 Redis session。
+
+### GET `/api/miniapp/user/me`
+
+用途：根据 `Authorization` token 获取当前用户资料和基础授权状态。
+
+请求头：
+
+```text
+Authorization: Bearer miniapp-openid:{openid}
+```
+
+响应体：
+
+```json
+{
+  "id": "{openid}",
+  "openid": "{openid}",
+  "nickname": "用户昵称",
+  "email": "user@example.com",
+  "avatarUrl": "https://www.njwjxy.cn:30443/zuoti-minio/public-assets/users/{openid}/avatar-xxx.png",
+  "status": "AUTHORIZED"
+}
+```
+
+### PUT `/api/miniapp/user/me`
+
+用途：保存“身份配置”页提交的头像、昵称、邮箱。
+
+请求头：
+
+```text
+Authorization: Bearer miniapp-openid:{openid}
+```
+
+请求体：
+
+```json
+{
+  "nickname": "用户昵称",
+  "email": "user@example.com",
+  "avatarBase64": "data:image/png;base64,..."
+}
+```
+
+字段规则：
+
+| 字段 | 规则 |
+| --- | --- |
+| `nickname` | 可为空；保存到 MySQL，必须支持中文 |
+| `email` | 可为空；填写时需要符合邮箱格式 |
+| `avatarBase64` | 可为空；提交时后端写入 MinIO 并生成公开 URL |
+
+响应体：
+
+```json
+{
+  "id": "{openid}",
+  "openid": "{openid}",
+  "nickname": "用户昵称",
+  "email": "user@example.com",
+  "avatarUrl": "https://www.njwjxy.cn:30443/zuoti-minio/public-assets/users/{openid}/avatar-xxx.png",
+  "status": "AUTHORIZED"
+}
+```
+
+错误处理：
+
+| 场景 | 建议状态码 | 处理 |
+| --- | --- | --- |
+| token 缺失或无效 | `401` | 前端重新调用 `wx.login` 建立身份 |
+| 邮箱格式错误 | `400` | 前端保留表单并提示修改 |
+| 头像类型或大小不合法 | `400` | 前端保留预览并提示更换头像 |
+| MinIO 上传失败 | `500` | 不覆盖旧头像 URL，前端允许重试 |
+
 ## 后台接口
 
 | 服务 | 方法 | 路径 | 说明 |
@@ -57,6 +167,15 @@ https://www.njwjxy.cn:30443
 | --- | --- |
 | MinIO S3 公开资源 | `https://www.njwjxy.cn:30443/zuoti-minio/public-assets/...` |
 | MinIO Console | `https://www.njwjxy.cn:30443/zuoti-minio-console/` |
+
+公开资源路径约定：
+
+| 路径 | 用途 |
+| --- | --- |
+| `/zuoti-minio/public-assets/video/zuoti-guide.mp4` | 首页教学视频 |
+| `/zuoti-minio/public-assets/images/video-cover.png` | 首页教学视频封面 |
+| `/zuoti-minio/public-assets/images/promo-*.png` | 首页推广图 |
+| `/zuoti-minio/public-assets/users/{openid}/avatar-{uuid}.{ext}` | 用户头像 |
 
 ## 当前实现说明
 

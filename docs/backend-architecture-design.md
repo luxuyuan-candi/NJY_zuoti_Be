@@ -161,6 +161,30 @@ namespace: zuoti
 3. 使用 `kubectl -n zuoti rollout restart deploy/<service>` 重启使用同一 `latest` 标签的目标服务。
 4. 使用 `curl -sk https://www.njwjxy.cn:30443/api/miniapp/content/home` 和 MinIO HTTPS 对象 URL 验证 Ingress。
 
+### 4.5 部署变更维护清单
+
+后续每次涉及部署、域名、证书、存储或服务接口的变更，都应同步检查以下内容：
+
+| 检查项 | 要求 |
+| --- | --- |
+| 镜像 | 确认 Docker 镜像已重新构建，使用 `latest` 标签时必须触发目标 Deployment 重启 |
+| Kustomize | 新增或调整资源后确认 `k8s/kustomization.yaml` 已引用对应 YAML |
+| Secret | 真实密钥只允许通过 Kubernetes Secret 注入，不写入 Markdown、代码或 YAML 明文 |
+| Ingress TLS | 所有对外 Ingress 必须配置 `ingressClassName: nginx` 和 `tls.secretName: ingress-tls` |
+| MinIO 外链 | 小程序、接口返回值和文档统一使用 `https://www.njwjxy.cn:30443/zuoti-minio/...` |
+| Console 入口 | MinIO Console 只作为运维入口，公开说明中不得记录真实账号密码 |
+| 数据迁移 | 涉及表结构、字符集或索引变更时，同步更新 `db/schema.sql` 和迁移说明 |
+| 验证 | 至少验证 Pod 状态、Ingress HTTPS、核心 API、MinIO 对象访问 |
+
+建议验证命令：
+
+```bash
+kubectl -n zuoti get pods
+kubectl -n zuoti get ingress
+curl -sk https://www.njwjxy.cn:30443/api/miniapp/content/home
+curl -skI https://www.njwjxy.cn:30443/zuoti-minio/public-assets/images/video-cover.png
+```
+
 ## 5. 中间件设计
 
 ### 5.1 MySQL
@@ -489,14 +513,28 @@ zuoti
 | `AUTHORIZED` | 已授权 |
 | `DISABLED` | 已禁用 |
 
-### 8.2 管理员身份
+### 8.2 用户资料保存流程
+
+用户资料维护由小程序“我的 -> 身份配置”触发，后端按以下顺序处理：
+
+1. 从 `Authorization: Bearer <token>` 解析当前 `openid`。
+2. 读取或创建 `users` 记录，禁止使用请求体中的 openid 覆盖当前身份。
+3. 校验昵称、邮箱和头像输入；邮箱为空时允许不保存。
+4. 如果提交头像 base64，则校验 MIME 类型和大小，生成服务端对象名。
+5. 将头像写入 MinIO `public-assets/users/{openid}/avatar-{uuid}.{ext}`。
+6. 将昵称、邮箱、头像公开 URL 写入 MySQL。
+7. 返回最新用户资料，前端刷新本地缓存和“我的”页展示。
+
+资料接口必须满足幂等更新要求：只修改本次提交的字段，未提交字段保持原值。头像上传失败时不得覆盖数据库中已有头像 URL。
+
+### 8.3 管理员身份
 
 - 管理员账号使用独立身份体系，不使用小程序 `openid` 作为管理员登录凭证。
 - 管理员密码必须加盐哈希保存，禁止明文保存。
 - 建议使用 bcrypt、argon2 或 PBKDF2。
 - 管理员登录 token 存入 Redis，并设置过期时间。
 
-### 8.3 题库授权
+### 8.4 题库授权
 
 授权维度建议：
 
@@ -693,3 +731,22 @@ zuoti
 - Kubernetes Deployment、Service、Ingress、ConfigMap、Secret 清单设计。
 - MinIO 文件访问和签名 URL 设计。
 - 离线缓存包格式设计。
+
+## 15. 文档同步规则
+
+本项目后续设计和部署变更应同步维护 Markdown 文档，避免实现和设计长期分离。
+
+| 变更类型 | 必须同步的文档 |
+| --- | --- |
+| 小程序页面、跳转、交互状态变化 | `docs/miniapp-page-flow-design.md` |
+| 后端服务拆分、K8s、Ingress、存储、密钥、部署策略变化 | `docs/backend-architecture-design.md` |
+| API 路径、请求体、响应体、鉴权规则变化 | `docs/api-overview.md` |
+| 数据库表结构、字段、索引、字符集变化 | `db/schema.sql`，并在架构文档中补充说明 |
+| MinIO Bucket、对象路径、公开访问域名变化 | 架构文档和 API 文档 |
+
+文档更新原则：
+
+- 已落地内容写清楚当前真实状态，规划内容明确标注为后续建议。
+- 不在文档中记录真实密码、AppSecret、token 签名密钥等敏感信息。
+- 对外 HTTPS 域名、Ingress 路径、Bucket 名称和接口路径必须与代码和 k8s 清单保持一致。
+- 后续对话中产生新的部署或功能设计决策时，应主动更新相关 MD 文件并提交。

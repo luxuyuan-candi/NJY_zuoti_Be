@@ -13,6 +13,15 @@ class LoginByCodeRequest(BaseModel):
     avatar_url: str | None = None
 
 
+class UpdateUserProfileRequest(BaseModel):
+    nickname: str | None = Field(default=None, max_length=128)
+    email: str | None = Field(default=None, max_length=255)
+    avatar_base64: str | None = None
+    avatar_content_type: str | None = "image/jpeg"
+    avatar_ext: str | None = "jpg"
+    avatar_url: str | None = None
+
+
 class FeedbackRequest(BaseModel):
     content: str = Field(min_length=1, max_length=500)
     category: str = "general"

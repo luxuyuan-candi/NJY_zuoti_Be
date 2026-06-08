@@ -150,6 +150,11 @@ Authorization: Bearer miniapp-openid:{openid}
 | 头像类型或大小不合法 | `400` | 前端保留预览并提示更换头像 |
 | MinIO 上传失败 | `500` | 不覆盖旧头像 URL，前端允许重试 |
 
+头像对象回收规则：
+
+- 同一用户重新上传新头像并保存成功后，后端会删除旧头像对应的 MinIO 对象。
+- MinIO 中只保留数据库当前 `avatarUrl` 正在引用的头像文件。
+
 ### GET `/api/miniapp/users`
 
 用途：小程序“人员管理”页面获取用户列表。

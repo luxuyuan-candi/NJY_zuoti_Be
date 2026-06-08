@@ -1,6 +1,7 @@
 import base64
 import json
 from io import BytesIO
+from urllib.parse import urlparse
 from uuid import uuid4
 
 from minio.error import S3Error
@@ -79,6 +80,8 @@ def update_user_profile(
     avatar_content_type: str | None,
     avatar_ext: str | None,
 ) -> dict:
+    current_user = get_user_by_openid(openid)
+    previous_avatar_url = current_user.get("avatarUrl") or ""
     saved_avatar_url = avatar_url
     if avatar_base64:
         saved_avatar_url = save_avatar(openid, avatar_base64, avatar_content_type, avatar_ext)
@@ -95,7 +98,10 @@ def update_user_profile(
                 """,
                 (nickname or None, email or None, saved_avatar_url or None, openid),
             )
-    return get_user_by_openid(openid)
+    updated_user = get_user_by_openid(openid)
+    if avatar_base64:
+        delete_replaced_avatar(previous_avatar_url, updated_user.get("avatarUrl") or "", openid)
+    return updated_user
 
 
 def list_users_for_manager(manager_openid: str) -> list[dict]:
@@ -162,6 +168,36 @@ def save_avatar(openid: str, avatar_base64: str, content_type: str | None, avata
         content_type=resolved_content_type,
     )
     return public_asset_url(object_name)
+
+
+def delete_replaced_avatar(previous_avatar_url: str, current_avatar_url: str, openid: str) -> None:
+    if not previous_avatar_url or previous_avatar_url == current_avatar_url:
+        return
+
+    object_name = extract_avatar_object_name(previous_avatar_url, openid)
+    if not object_name:
+        return
+
+    client = create_minio_client()
+    try:
+        client.remove_object(PUBLIC_BUCKET, object_name)
+    except S3Error:
+        pass
+
+
+def extract_avatar_object_name(avatar_url: str, openid: str) -> str | None:
+    settings = get_settings()
+    public_prefix = f"{settings.minio_public_base_url.rstrip('/')}/{PUBLIC_BUCKET}/"
+    if not avatar_url.startswith(public_prefix):
+        return None
+
+    object_name = avatar_url.removeprefix(public_prefix).lstrip("/")
+    parsed = urlparse(f"https://placeholder/{object_name}")
+    normalized_object_name = parsed.path.lstrip("/")
+    expected_prefix = f"users/{openid}/avatar-"
+    if not normalized_object_name.startswith(expected_prefix):
+        return None
+    return normalized_object_name
 
 
 def ensure_public_bucket(client) -> None:

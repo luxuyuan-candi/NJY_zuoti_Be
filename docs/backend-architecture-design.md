@@ -5,7 +5,8 @@
 ## 1. 架构目标
 
 - 支持微信小程序通过统一 HTTPS 入口访问后端。
-- 支持注册用户和管理员授权用户访问题库。
+- 支持微信小程序自动获取 `openid` 并以 `openid` 作为用户主键，用户可维护头像、昵称、邮箱等身份资料。
+- 支持管理员按用户授权访问题库。
 - 支持考试类、课程类题库的维护、练习、考试、错题、收藏、成绩、趋势统计。
 - 支持首页教学视频和学习推广内容管理。
 - 支持题目离线缓存和缓存版本更新。
@@ -70,7 +71,8 @@ https://www.njwjxy.cn:30443
 | --- | --- |
 | 小程序接口 | `https://www.njwjxy.cn:30443/api/miniapp/...` |
 | 后台管理接口 | `https://www.njwjxy.cn:30443/api/admin/...` |
-| 文件访问代理 | `https://www.njwjxy.cn:30443/api/files/...` |
+| MinIO 公开资源 | `https://www.njwjxy.cn:30443/zuoti-minio/public-assets/...` |
+| MinIO 管理页面 | `https://www.njwjxy.cn:30443/zuoti-minio-console/` |
 
 ### 3.2 微信小程序配置
 
@@ -83,8 +85,11 @@ https://www.njwjxy.cn:30443
 
 集群中已部署 Ingress Controller，本项目不需要重复部署 Ingress Controller。后端只需要在 `zuoti` namespace 中维护项目自己的 Ingress 资源，将外部入口路由到对应微服务或 API 网关服务。
 
-- HTTPS 终止或转发。
+- HTTPS 终止或转发，Ingress 显式配置 `ingressClassName: nginx`。
+- TLS 证书通过 `zuoti` namespace 下的 `ingress-tls` Secret 引用，和已有 `maoning` 项目保持同一域名证书配置方式。
 - 路由小程序接口和后台管理接口。
+- 路由 MinIO S3 API：`/zuoti-minio(/|$)(.*)` -> `zuoti-minio:9000`。
+- 路由 MinIO Console：`/zuoti-minio-console(/|$)(.*)` -> `zuoti-minio:9001`。
 - 统一跨域、安全头、请求体大小限制。
 - 基础限流和黑名单拦截。
 - 将请求转发到 `zuoti` namespace 内的微服务。
@@ -112,6 +117,8 @@ namespace: zuoti
 | 配置 | `ConfigMap` |
 | 密钥 | `Secret` |
 
+本地集群当前使用单节点 `local-storage`，没有动态卷 provisioner。部署时需要提前准备本地 PV，供 MySQL、Redis、MongoDB、MinIO 的 StatefulSet PVC 绑定。长期生产部署建议替换为稳定的动态存储或独立持久化存储服务。
+
 ### 4.3 服务命名建议
 
 | 服务 | K8s Service 名称 |
@@ -131,6 +138,28 @@ namespace: zuoti
 | Redis | `zuoti-redis` |
 | MongoDB | `zuoti-mongodb` |
 | MinIO | `zuoti-minio` |
+
+### 4.4 当前落地部署优化
+
+当前 `zuoti` namespace 已采用以下部署约定：
+
+| 资源 | 当前配置 |
+| --- | --- |
+| 业务服务镜像 | `ghcr.io/luxuyuan-candi/njy-zuoti-be:latest` |
+| 微服务副本 | 10 个 FastAPI 微服务，默认 `replicas: 2` |
+| 探针策略 | `readinessProbe` 延迟 20 秒，`livenessProbe` 延迟 30 秒，避免 Python 应用启动阶段被过早杀掉 |
+| API Ingress | `zuoti-ingress`，`ingressClassName: nginx`，TLS Secret 为 `ingress-tls` |
+| MinIO S3 Ingress | `zuoti-minio-ingress`，路径 `/zuoti-minio(/|$)(.*)` rewrite 到 `zuoti-minio:9000` |
+| MinIO Console Ingress | `zuoti-minio-console-ingress`，路径 `/zuoti-minio-console(/|$)(.*)` rewrite 到 `zuoti-minio:9001` |
+| MinIO Console Redirect | `MINIO_BROWSER_REDIRECT_URL=https://www.njwjxy.cn:30443/zuoti-minio-console` |
+| MySQL 字符集 | `users` 表使用 `utf8mb4`，保证中文昵称和邮箱资料保存正常 |
+
+部署变更后应执行：
+
+1. `docker build -t ghcr.io/luxuyuan-candi/njy-zuoti-be:latest .`
+2. `kubectl apply -k k8s`
+3. 使用 `kubectl -n zuoti rollout restart deploy/<service>` 重启使用同一 `latest` 标签的目标服务。
+4. 使用 `curl -sk https://www.njwjxy.cn:30443/api/miniapp/content/home` 和 MinIO HTTPS 对象 URL 验证 Ingress。
 
 ## 5. 中间件设计
 
@@ -193,21 +222,31 @@ zuoti
 - 首页教学视频。
 - 推广内容图片、Banner。
 - 题目图片。
+- 用户头像。
 - 后台上传的其他静态资源。
 
-存储桶建议：
+当前第一阶段部署使用统一公开桶：
 
 | Bucket | 用途 |
 | --- | --- |
-| `zuoti-videos` | 教学视频 |
-| `zuoti-images` | 图片、Banner、题目图片 |
-| `zuoti-private` | 需要鉴权访问的私有资源 |
+| `public-assets` | 首页视频、推广图片、用户头像等可公开读取资源 |
+
+对象路径约定：
+
+| 对象路径 | 用途 |
+| --- | --- |
+| `video/zuoti-guide.mp4` | 首页教学视频 |
+| `images/video-cover.png` | 首页教学视频封面 |
+| `images/promo-*.png` | 首页推广图片 |
+| `users/{openid}/avatar-{uuid}.{ext}` | 用户头像 |
 
 访问策略：
 
 - 不建议小程序直接使用 MinIO 内网地址。
-- 后端可生成短期有效的签名 URL，或通过 `/api/files/...` 代理访问。
+- 小程序使用 HTTPS 域名公开地址：`https://www.njwjxy.cn:30443/zuoti-minio/public-assets/...`。
+- 后端保存资源时写入 MinIO 内网地址 `zuoti-minio:9000`，对外返回 `MINIO_PUBLIC_BASE_URL + /public-assets/...`。
 - 私有资源必须鉴权后访问。
+- MinIO Console 单独通过 `https://www.njwjxy.cn:30443/zuoti-minio-console/` 暴露，仅供管理员运维使用，应限制访问来源并定期轮换 root 密码。
 
 ## 6. 微服务拆分
 
@@ -218,15 +257,16 @@ zuoti
 - 微信登录。
 - 通过微信 `code` 换取 `openid`。
 - 使用小程序 AppID `wxb88840bf78c6cd4d` 和通过 Secret 注入的 AppSecret 调用微信服务端接口。
-- 生成小程序访问 token。
-- 管理登录态、token 刷新和退出登录。
+- 用户无需手动登录；前端首次需要身份时自动调用 `wx.login`，后端换取 `openid` 后创建或更新用户记录。
+- 生成小程序访问 token，当前第一阶段 token 格式为 `miniapp-openid:{openid}`，后续可替换为签名 JWT 或 Redis 会话。
 - 后台管理员登录。
 
 核心身份规则：
 
-- 微信访问小程序的唯一 `openid` 作为用户身份的其中一个主键。
+- 微信访问小程序的唯一 `openid` 作为用户身份主键，`users.id = users.openid`。
 - 用户表中必须保存 `openid`，并对 `openid` 建唯一索引。
 - 如后续接入 unionid，可作为跨应用身份辅助字段，不能替代当前小程序 `openid` 的唯一性。
+- `auth-service` 只负责身份建立和 token 签发，不保存头像文件。
 
 ### 6.2 user-service
 
@@ -234,13 +274,16 @@ zuoti
 
 - 小程序用户注册和资料维护。
 - 用户授权状态查询。
+- 用户头像、昵称、邮箱维护。
 - 管理员给用户授权题库或课程。
 - 用户奖牌和排名基础资料查询。
 
 核心规则：
 
-- 未注册用户不能访问题库。
-- 已注册但未授权用户不能查看题库。
+- 首次获取 `openid` 时自动创建用户，不需要单独登录注册步骤。
+- 头像可来自相册、拍照或微信头像，前端转为 base64 后提交，后端写入 MinIO 并保存公开 URL。
+- 昵称、邮箱保存到 MySQL，`users` 表使用 `utf8mb4` 字符集，保证中文昵称不乱码。
+- 已建立身份但未授权用户不能查看题库。
 - 授权范围第一阶段建议精确到题库或课程。
 - 授权变更后需要清理或刷新 Redis 中的用户授权缓存。
 
@@ -368,7 +411,7 @@ zuoti
 
 | 表 | 用途 |
 | --- | --- |
-| `users` | 小程序用户，包含 `openid` |
+| `users` | 小程序用户，`id/openid`、昵称、邮箱、头像 URL、授权状态 |
 | `admins` | 后台管理员 |
 | `roles` | 管理员角色 |
 | `admin_roles` | 管理员角色关系 |
@@ -419,11 +462,24 @@ zuoti
 
 ### 8.1 小程序用户身份
 
-- 微信 `openid` 是小程序用户身份的关键主键之一。
+- 微信 `openid` 是小程序用户身份主键。
+- 当前实现中 `users.id = users.openid`，减少额外用户 ID 映射。
 - `users.openid` 必须唯一。
-- 用户首次微信登录后，如数据库不存在该 `openid`，创建用户记录。
-- 用户默认状态为已注册但未授权。
+- 用户首次进入“我的”或需要身份的功能时，前端通过 `wx.login` 自动获取 code，后端调用微信 `jscode2session` 换取 `openid`。
+- 如数据库不存在该 `openid`，创建用户记录。
+- 当前第一阶段默认将身份状态置为 `AUTHORIZED` 便于联调；完整授权规则仍应由管理员授权表控制。
 - 管理员授权后，用户才能访问对应题库或课程。
+
+用户资料字段：
+
+| 字段 | 说明 |
+| --- | --- |
+| `id` | 用户主键，等于 `openid` |
+| `openid` | 微信小程序身份 ID |
+| `nickname` | 用户配置昵称 |
+| `email` | 用户配置邮箱 |
+| `avatar_url` | MinIO 公开头像地址 |
+| `status` | 用户状态 |
 
 建议用户状态：
 
@@ -477,6 +533,14 @@ zuoti
 | 反馈 | `/api/miniapp/feedback` |
 | 文件 | `/api/miniapp/files` |
 
+已落地的身份资料接口：
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| `POST` | `/api/miniapp/auth/login` | 通过微信 code 换取 openid，确保用户存在并返回 token |
+| `GET` | `/api/miniapp/user/me` | 根据 token 中的 openid 返回当前用户资料 |
+| `PUT` | `/api/miniapp/user/me` | 保存昵称、邮箱、头像；头像写入 MinIO |
+
 ### 9.2 后台管理接口
 
 | 分组 | 前缀 |
@@ -529,6 +593,7 @@ zuoti
 - Redis 密码。
 - MongoDB 用户名和密码。
 - MinIO access key 和 secret key。
+- MinIO root console 账号密码。
 - 微信小程序 app secret。
 - JWT 或 token 签名密钥。
 - 管理员初始密码。
@@ -558,9 +623,12 @@ zuoti
 ### 11.3 接口安全
 
 - 小程序接口必须校验登录 token。
+- 身份 token 中携带或可解析出 openid，后端不得信任前端直接传入的 openid 作为当前用户。
 - 题库、题目、考试、缓存包接口必须校验用户授权。
 - 后台管理接口必须校验管理员登录态和角色权限。
 - 文件上传接口限制文件类型、大小和来源。
+- 头像上传限制图片类型、大小和后缀，后端生成对象名，不允许前端指定 MinIO 对象路径。
+- MinIO Console 已通过 HTTPS 暴露，只能作为运维入口，应通过网络策略、Ingress 白名单或 VPN 进一步收敛访问面。
 - 管理端敏感操作需要记录审计日志。
 - 建议对登录、提交答案、上传文件等接口做限流。
 
@@ -601,13 +669,17 @@ zuoti
 9. `admin-service`
 10. MySQL、Redis、MongoDB、MinIO 基础部署
 11. 基于已有 Ingress Controller 配置项目 Ingress 路由到 `https://www.njwjxy.cn:30443`
-12. Kubernetes Secret 和 ConfigMap 注入
+12. 为 API、MinIO S3 API、MinIO Console 配置 `ingressClassName: nginx` 和 `ingress-tls`
+13. Kubernetes Secret 和 ConfigMap 注入
+14. 用户 openid 身份建立、资料保存、头像写入 MinIO
 
 第二阶段扩展：
 
 - `ranking-service` 独立化。
 - 更复杂的奖牌规则。
 - 更细粒度的授权范围。
+- 使用签名 JWT 或 Redis session 替换第一阶段的 `miniapp-openid:{openid}` 简化 token。
+- 对 MinIO Console 入口增加 IP 白名单、独立域名或 VPN 访问限制。
 - 统计报表和数据导出。
 - 更完整的审计日志和运维告警。
 

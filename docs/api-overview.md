@@ -10,10 +10,11 @@ https://www.njwjxy.cn:30443
 
 | 服务 | 方法 | 路径 | 说明 |
 | --- | --- | --- | --- |
-| auth-service | POST | `/api/miniapp/auth/login` | 微信 code 登录，占位实现 |
+| auth-service | POST | `/api/miniapp/auth/login` | 微信 code 换取 openid，自动创建 / 更新用户身份并返回 token |
 | user-service | GET | `/api/miniapp/user/me` | 当前用户信息、授权状态、排名摘要 |
+| user-service | PUT | `/api/miniapp/user/me` | 保存当前用户昵称、邮箱、头像；头像写入 MinIO |
 | content-service | GET | `/api/miniapp/content/home` | 首页教学视频、推广内容、公告 |
-| content-service | GET | `/api/miniapp/files/{file_id}` | 文件访问占位接口 |
+| content-service | GET | `/api/miniapp/files/{file_id}` | 返回 MinIO 公开资源 URL |
 | bank-service | GET | `/api/miniapp/banks` | 已授权题库列表 |
 | bank-service | GET | `/api/miniapp/banks/{bank_id}/chapters` | 章节列表 |
 | question-service | GET | `/api/miniapp/questions/{question_id}` | 题目详情 |
@@ -50,9 +51,17 @@ https://www.njwjxy.cn:30443
 | content-service | POST | `/api/admin/files` | 文件上传占位接口 |
 | feedback-service | GET | `/api/admin/feedback` | 反馈管理 |
 
+## 公开资源入口
+
+| 资源 | HTTPS 入口 |
+| --- | --- |
+| MinIO S3 公开资源 | `https://www.njwjxy.cn:30443/zuoti-minio/public-assets/...` |
+| MinIO Console | `https://www.njwjxy.cn:30443/zuoti-minio-console/` |
+
 ## 当前实现说明
 
-- 目前接口使用模拟数据，主要用于联调页面和验证路由。
-- 真实 MySQL、Redis、MongoDB、MinIO 访问层后续在 `src/zuoti_common` 中补充。
+- 身份与用户资料接口已接入 MySQL 和 MinIO：`openid` 作为 `users.id`，头像保存到 `public-assets/users/{openid}/...`。
+- 题库、练习、考试、排名等接口仍以模拟数据为主，用于联调页面和验证路由。
 - 除登录、公开首页内容外，小程序业务接口预期使用 `Authorization: Bearer <token>`。
+- 第一阶段小程序 token 格式为 `miniapp-openid:{openid}`，后续建议替换为签名 JWT 或 Redis session。
 - 后台接口预期使用管理员 token。

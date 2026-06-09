@@ -71,6 +71,7 @@ https://www.njwjxy.cn:30443
 - 前端不得自行生成或传入 openid。
 - 后端通过微信 `jscode2session` 获取 openid。
 - 如果 `users` 表中不存在该 openid，后端自动创建用户，默认角色为 `GUEST`。
+- 小程序启动阶段如果旧 token 拉取 `/api/miniapp/user/me` 失败，前端应清理本地 `token/user` 缓存后重新执行 `POST /api/miniapp/auth/login`。
 - 当前第一阶段 token 为简化格式，后续应替换为签名 JWT 或 Redis session。
 
 ### GET `/api/miniapp/user/me`
@@ -117,6 +118,11 @@ Authorization: Bearer miniapp-openid:{openid}
   "avatarBase64": "data:image/png;base64,..."
 }
 ```
+
+请求约束：
+
+- 当前页面头像选择仅使用微信原生 `chooseAvatar`，前端提交给后端的是新头像的 base64 数据。
+- 前端不得把本地临时文件路径当作 `avatarUrl` 回传给后端。
 
 字段规则：
 

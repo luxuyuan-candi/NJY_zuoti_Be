@@ -49,6 +49,10 @@ https://www.njwjxy.cn:30443
 - `/api/miniapp/practice/answers`
   - 按题目 `_id` 回查 MongoDB `questions`
   - 返回真实答案与解析
+- 记录、错题、趋势统计
+  - 当前第一阶段由小程序前端在用户点击“完成”后落本地完成记录
+  - “总做题数”“正确率”“考试数”“错题本”“趋势统计”都只基于已完成记录统计
+  - `practice-service` 下 `/api/miniapp/records*` 仍为占位接口，后续再迁移为服务端持久化
 
 ## 小程序身份资料接口契约
 

@@ -503,6 +503,11 @@ zuoti
 - `practice-service /api/miniapp/practice/answers`
   - 直接按题目 `_id` 回查 `questions`
   - 返回真实答案与解析
+- 记录页当前实现
+  - 第一阶段“记录 / 错题本 / 趋势统计”仍未接入后端持久化表
+  - 小程序前端仅在用户点击“完成”后写入本地完成记录
+  - “总做题数”“正确率”“考试数”“错题本”“趋势统计”均由本地完成记录聚合
+  - 后续如果切换为服务端持久化，应将 `practice_records`、`practice_answers`、`mistakes` 作为主数据源，并将本地缓存作为离线兜底
 
 ### 7.3 Redis Key 建议
 

@@ -489,6 +489,21 @@ zuoti
   3. 按叶子名称包含关系匹配
   4. 仍无法匹配时写入 `importance = null`
 
+当前题库页与练习链路实现约定：
+
+- `bank-service`
+  - 直接读取 `practice_sets`
+  - 小程序题库页不再使用前端或后端模拟题库数据
+- `bank-service /api/miniapp/banks/{bank_id}/chapters`
+  - 直接读取 `questions`
+  - 按 `knowledge.pathNames[:-1]` 聚合章节
+- `practice-service /api/miniapp/practice/start`
+  - 按 `practiceSetId + chapter_key` 从 `questions` 选题
+  - 第一阶段直接返回题目列表，由前端完成顺序练习流程
+- `practice-service /api/miniapp/practice/answers`
+  - 直接按题目 `_id` 回查 `questions`
+  - 返回真实答案与解析
+
 ### 7.3 Redis Key 建议
 
 | Key 模式 | 用途 |

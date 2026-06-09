@@ -34,6 +34,22 @@ https://www.njwjxy.cn:30443
 | ranking-service | GET | `/api/miniapp/ranking/medals` | 用户奖牌 |
 | feedback-service | POST | `/api/miniapp/feedback` | 提交反馈 |
 
+当前题库链路实现说明：
+
+- `/api/miniapp/banks`
+  - 直接读取 MongoDB `practice_sets`
+  - 当前返回初级、中级、高级三个理论习题集
+- `/api/miniapp/banks/{bank_id}/chapters`
+  - 直接读取 MongoDB `questions`
+  - 按 `knowledge.pathNames` 的叶子前层级聚合章节
+  - 响应体包含 `bank` 和 `chapters`
+- `/api/miniapp/practice/start`
+  - 请求体字段：`bank_id`、`chapter_key`、`count`、`order`
+  - 直接从 MongoDB `questions` 返回真实练习题列表
+- `/api/miniapp/practice/answers`
+  - 按题目 `_id` 回查 MongoDB `questions`
+  - 返回真实答案与解析
+
 ## 小程序身份资料接口契约
 
 ### POST `/api/miniapp/auth/login`

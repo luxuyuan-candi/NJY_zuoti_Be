@@ -34,9 +34,11 @@ def create_mongodb_client():
 
     settings = get_settings()
     auth = ""
+    options = ""
     if settings.mongodb_user:
         auth = f"{settings.mongodb_user}:{settings.mongodb_password}@"
-    uri = f"mongodb://{auth}{settings.mongodb_host}:{settings.mongodb_port}/{settings.mongodb_database}"
+        options = "?authSource=admin"
+    uri = f"mongodb://{auth}{settings.mongodb_host}:{settings.mongodb_port}/{settings.mongodb_database}{options}"
     return MongoClient(uri)
 
 

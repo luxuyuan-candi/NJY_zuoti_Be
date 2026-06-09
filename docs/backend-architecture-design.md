@@ -466,10 +466,28 @@ zuoti
 
 | Collection | 用途 |
 | --- | --- |
+| `practice_sets` | 习题集元数据，区分初级/中级/高级及导入来源 |
 | `questions` | 题目正文、选项、答案、解析 |
 | `question_versions` | 题目版本快照 |
 | `offline_packages` | 离线缓存包元数据和题目集合 |
 | `bank_snapshots` | 题库发布快照 |
+
+当前题库导入约定：
+
+- 理论题库导入脚本：`scripts/import_theory_xlsx_to_mongodb.py`
+- 源文件：`14.理论题库(1).xlsx`
+- 目标集合：
+  - `practice_sets`：保存 `theory-primary`、`theory-intermediate`、`theory-advanced`
+  - `questions`：保存题目正文，并通过 `practiceSetId` 关联习题集
+- `questions` 文档保留所有非空原始字段到 `rawFields`
+- 题目知识点保存到 `knowledge.pathRaw`、`knowledge.pathNames`
+- 题目重要程度保存到 `importance`
+- 重要程度匹配来源和命中方式保存到 `importanceMeta`
+- 重要程度匹配优先级：
+  1. 按完整知识点层级精确匹配
+  2. 按知识点叶子名称匹配
+  3. 按叶子名称包含关系匹配
+  4. 仍无法匹配时写入 `importance = null`
 
 ### 7.3 Redis Key 建议
 

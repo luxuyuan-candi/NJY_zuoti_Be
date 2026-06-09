@@ -282,7 +282,7 @@ zuoti
 - 微信登录。
 - 通过微信 `code` 换取 `openid`。
 - 使用小程序 AppID `wxb88840bf78c6cd4d` 和通过 Secret 注入的 AppSecret 调用微信服务端接口。
-- 用户无需手动登录；前端首次需要身份时自动调用 `wx.login`，后端换取 `openid` 后创建或更新用户记录。
+- 用户无需手动登录；小程序启动时自动调用 `wx.login`，后端换取 `openid` 后创建或更新用户记录。
 - 生成小程序访问 token，当前第一阶段 token 格式为 `miniapp-openid:{openid}`，后续可替换为签名 JWT 或 Redis 会话。
 - 后台管理员登录。
 
@@ -491,8 +491,9 @@ zuoti
 - 微信 `openid` 是小程序用户身份主键。
 - 当前实现中 `users.id = users.openid`，减少额外用户 ID 映射。
 - `users.openid` 必须唯一。
-- 用户首次进入“我的”或需要身份的功能时，前端通过 `wx.login` 自动获取 code，后端调用微信 `jscode2session` 换取 `openid`。
+- 小程序启动时，前端通过 `wx.login` 自动获取 code，后端调用微信 `jscode2session` 换取 `openid`。
 - 如数据库不存在该 `openid`，创建用户记录。
+- 新用户默认角色为 `GUEST`。
 - 当前第一阶段默认将身份状态置为 `AUTHORIZED` 便于联调；完整授权规则仍应由管理员授权表控制。
 - 管理员授权后，用户才能访问对应题库或课程。
 

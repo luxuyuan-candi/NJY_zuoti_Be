@@ -38,7 +38,7 @@ https://www.njwjxy.cn:30443
 
 ### POST `/api/miniapp/auth/login`
 
-用途：小程序通过 `wx.login` 获取 code 后，提交给后端换取 `openid` 并建立本地业务身份。
+用途：小程序启动时通过 `wx.login` 获取 code 后，提交给后端换取 `openid` 并建立本地业务身份。
 
 请求体：
 
@@ -59,8 +59,8 @@ https://www.njwjxy.cn:30443
     "nickname": "",
     "email": "",
     "avatarUrl": "",
-    "role": "USER",
-    "roleLabel": "普通用户",
+    "role": "GUEST",
+    "roleLabel": "游客",
     "status": "AUTHORIZED"
   }
 }
@@ -70,7 +70,7 @@ https://www.njwjxy.cn:30443
 
 - 前端不得自行生成或传入 openid。
 - 后端通过微信 `jscode2session` 获取 openid。
-- 如果 `users` 表中不存在该 openid，后端自动创建用户。
+- 如果 `users` 表中不存在该 openid，后端自动创建用户，默认角色为 `GUEST`。
 - 当前第一阶段 token 为简化格式，后续应替换为签名 JWT 或 Redis session。
 
 ### GET `/api/miniapp/user/me`

@@ -43,7 +43,7 @@ def ensure_user(openid: str, nickname: str | None = None, avatar_url: str | None
             cursor.execute(
                 """
                 INSERT INTO users (id, openid, nickname, avatar_url, role, status)
-                VALUES (%s, %s, %s, %s, 'USER', 'AUTHORIZED')
+                VALUES (%s, %s, %s, %s, 'GUEST', 'AUTHORIZED')
                 ON DUPLICATE KEY UPDATE
                   nickname = COALESCE(NULLIF(VALUES(nickname), ''), nickname),
                   avatar_url = COALESCE(NULLIF(VALUES(avatar_url), ''), avatar_url),

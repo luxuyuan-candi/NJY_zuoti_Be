@@ -7,7 +7,9 @@ from src.zuoti_common.app import create_app
 from src.zuoti_common.practice_records import (
     dismiss_mistake,
     ensure_practice_schema,
+    get_global_mistake_detail,
     get_practice_record,
+    get_record_mistake_detail,
     get_record_dashboard,
     list_global_mistakes,
     list_practice_trends,
@@ -109,6 +111,14 @@ def remove_mistake(mistake_id: str, token: str = Depends(require_bearer_token)):
     return {"success": True, "data": {"removed": True}}
 
 
+@router.get("/api/miniapp/records/mistakes/{mistake_id}")
+def mistake_detail(mistake_id: str, token: str = Depends(require_bearer_token)):
+    detail = get_global_mistake_detail(openid_from_token(token), mistake_id)
+    if not detail:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="mistake not found")
+    return {"success": True, "data": detail}
+
+
 @router.get("/api/miniapp/records/trends")
 def trends(token: str = Depends(require_bearer_token)):
     return {"success": True, "data": list_practice_trends(openid_from_token(token))}
@@ -130,6 +140,14 @@ def record_detail(record_id: str, token: str = Depends(require_bearer_token)):
 @router.get("/api/miniapp/records/{record_id}/mistakes")
 def record_mistakes(record_id: str, token: str = Depends(require_bearer_token)):
     return {"success": True, "data": list_record_mistakes(openid_from_token(token), record_id)}
+
+
+@router.get("/api/miniapp/records/mistake-items/{item_id}")
+def record_mistake_detail(item_id: str, token: str = Depends(require_bearer_token)):
+    detail = get_record_mistake_detail(openid_from_token(token), item_id)
+    if not detail:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="record mistake not found")
+    return {"success": True, "data": detail}
 
 
 ensure_practice_schema()

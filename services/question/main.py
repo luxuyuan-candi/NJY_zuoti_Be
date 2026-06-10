@@ -1,7 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.zuoti_common.app import create_app
-from src.zuoti_common.question_bank import get_question_by_id, list_questions, serialize_question_for_practice
+from src.zuoti_common.question_bank import (
+    get_question_by_id,
+    list_questions,
+    serialize_question_detail,
+    serialize_question_for_practice,
+)
 from src.zuoti_common.security import require_admin_token, require_bearer_token
 
 router = APIRouter()
@@ -12,7 +17,7 @@ def get_question(question_id: str, _: str = Depends(require_bearer_token)):
     row = get_question_by_id(question_id)
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="question not found")
-    return {"success": True, "data": serialize_question_for_practice(row, 1, 1)}
+    return {"success": True, "data": serialize_question_detail(row)}
 
 
 @router.get("/api/miniapp/questions/offline-packages/{bank_id}")

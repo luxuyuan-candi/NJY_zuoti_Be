@@ -236,6 +236,21 @@ def serialize_question_summary(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def serialize_question_detail(row: dict[str, Any]) -> dict[str, Any]:
+    knowledge = row.get("knowledge") or {}
+    return {
+        "id": row["_id"],
+        "type": row.get("type") or "",
+        "typeLabel": row.get("typeLabel") or TYPE_LABELS.get(row.get("type") or "", ""),
+        "stem": row.get("stem") or "",
+        "options": row.get("options") or [],
+        "answer": row.get("answer") or "",
+        "analysis": row.get("analysis"),
+        "knowledge": knowledge,
+        "importance": row.get("importance"),
+    }
+
+
 def serialize_question_for_practice(row: dict[str, Any], no: int, total: int) -> dict[str, Any]:
     knowledge = row.get("knowledge") or {}
     return {

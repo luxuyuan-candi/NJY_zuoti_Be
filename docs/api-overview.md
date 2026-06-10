@@ -28,6 +28,8 @@ https://www.njwjxy.cn:30443
 | practice-service | GET | `/api/miniapp/records/trends` | 正确率趋势 |
 | practice-service | GET | `/api/miniapp/records/mistakes` | 错题本 |
 | practice-service | DELETE | `/api/miniapp/records/mistakes/{mistake_id}` | 手动移出错题本 |
+| practice-service | GET | `/api/miniapp/records/mistakes/{mistake_id}` | 错题本单题详情 |
+| practice-service | GET | `/api/miniapp/records/mistake-items/{item_id}` | 本次错题单题详情 |
 | practice-service | GET | `/api/miniapp/records/{record_id}` | 单次完成记录详情 |
 | practice-service | GET | `/api/miniapp/records/{record_id}/mistakes` | 单次完成记录中的错题 |
 | practice-service | GET | `/api/miniapp/records/favorites` | 收藏题 |
@@ -61,6 +63,7 @@ https://www.njwjxy.cn:30443
   - 当前“考试数”展示口径为完成次数，每次练习或考试点击“完成”后计一次
   - `GET /api/miniapp/records/{record_id}/mistakes` 只返回该次完成记录中的错题
   - `GET /api/miniapp/records/mistakes` 返回用户全量错题本，并按题目聚合 `wrongTimes`
+  - 两类错题列表都支持点击进入详情页，查看题干、选项、用户选择、正确答案和解析
 
 ## 小程序身份资料接口契约
 

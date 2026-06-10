@@ -65,7 +65,7 @@ https://www.njwjxy.cn:30443
   - `GET /api/miniapp/records/{record_id}/mistakes` 只返回该次完成记录中的错题
   - `GET /api/miniapp/records/mistakes` 返回用户全量错题本，并按题目聚合 `wrongTimes`
   - 两类错题列表都支持点击进入详情页；“本次错题”详情展示用户选择，“错题本”详情不展示用户选择
-  - 最近记录列表使用接口返回的 `dateTime` 字段，时间精确到分钟
+  - 最近记录列表使用接口返回的 `dateTime` 字段，时间精确到分钟，并按东八区时间展示
 
 ## 小程序身份资料接口契约
 

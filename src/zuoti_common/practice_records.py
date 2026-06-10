@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid4
 
 from .clients import create_mysql_connection
@@ -520,13 +520,17 @@ def _format_record_summary(row: dict) -> dict:
 
 
 def _format_date(value) -> str:
-    dt = _to_datetime(value)
+    dt = _to_local_datetime(value)
     return dt.strftime("%Y-%m-%d")
 
 
 def _format_datetime(value) -> str:
-    dt = _to_datetime(value)
+    dt = _to_local_datetime(value)
     return dt.strftime("%Y-%m-%d %H:%M")
+
+
+def _to_local_datetime(value) -> datetime:
+    return _to_datetime(value) + timedelta(hours=8)
 
 
 def _to_datetime(value) -> datetime:

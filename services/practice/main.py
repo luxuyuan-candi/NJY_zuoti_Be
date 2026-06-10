@@ -24,10 +24,11 @@ router = APIRouter()
 
 
 class StartPracticeRequest(BaseModel):
-    bank_id: str = Field(min_length=1)
+    bank_id: str = ""
     chapter_key: str | None = None
     count: int = Field(default=20, ge=1, le=100)
     order: str = "SEQUENTIAL"
+    question_ids: list[str] = Field(default_factory=list)
 
 
 class SubmitAnswerRequest(BaseModel):
@@ -63,11 +64,14 @@ class SavePracticeRecordRequest(BaseModel):
 
 @router.post("/api/miniapp/practice/start")
 def start_practice(payload: StartPracticeRequest, _: str = Depends(require_bearer_token)):
+    if not payload.bank_id and not payload.question_ids:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="bank_id or question_ids is required")
     questions = build_practice_questions(
         practice_set_id=payload.bank_id,
         chapter_key=payload.chapter_key,
         count=payload.count,
         order=payload.order,
+        question_ids=payload.question_ids,
     )
     if not questions:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="no questions found for selection")

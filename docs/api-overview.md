@@ -52,6 +52,7 @@ https://www.njwjxy.cn:30443
   - 响应体包含 `bank` 和 `chapters`
 - `/api/miniapp/practice/start`
   - 请求体字段：`bank_id`、`chapter_key`、`count`、`order`
+  - 错题重做场景可直接传 `question_ids`
   - 直接从 MongoDB `questions` 返回真实练习题列表
 - `/api/miniapp/practice/answers`
   - 按题目 `_id` 回查 MongoDB `questions`

@@ -135,34 +135,48 @@ def build_practice_questions(
     chapter_key: str | None,
     count: int,
     order: str = "SEQUENTIAL",
+    question_ids: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     db = get_question_db()
-    rows = list(
-        db["questions"].find(
-            {"practiceSetId": practice_set_id},
-            {
-                "_id": 1,
-                "type": 1,
-                "typeLabel": 1,
-                "stem": 1,
-                "options": 1,
-                "analysis": 1,
-                "answer": 1,
-                "knowledge": 1,
-                "importance": 1,
-            },
+    projection = {
+        "_id": 1,
+        "type": 1,
+        "typeLabel": 1,
+        "stem": 1,
+        "options": 1,
+        "analysis": 1,
+        "answer": 1,
+        "knowledge": 1,
+        "importance": 1,
+    }
+
+    if question_ids:
+        rows = list(
+            db["questions"].find(
+                {"_id": {"$in": question_ids}},
+                projection,
+            )
         )
-    )
+        row_map = {row["_id"]: row for row in rows}
+        rows = [row_map[question_id] for question_id in question_ids if question_id in row_map]
+    else:
+        rows = list(
+            db["questions"].find(
+                {"practiceSetId": practice_set_id},
+                projection,
+            )
+        )
 
     chapter_path = decode_chapter_key(chapter_key)
-    if chapter_path:
+    if chapter_path and not question_ids:
         rows = [
             row
             for row in rows
             if ((row.get("knowledge") or {}).get("pathNames") or [])[:-1] == chapter_path
         ]
 
-    rows.sort(key=lambda item: item["_id"])
+    if not question_ids:
+        rows.sort(key=lambda item: item["_id"])
     normalized_order = (order or "SEQUENTIAL").strip().upper()
     if normalized_order == "RANDOM":
         random.shuffle(rows)

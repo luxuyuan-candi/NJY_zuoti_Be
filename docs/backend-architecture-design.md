@@ -499,6 +499,7 @@ zuoti
   - 按 `knowledge.pathNames[:-1]` 聚合章节
 - `practice-service /api/miniapp/practice/start`
   - 按 `practiceSetId + chapter_key` 从 `questions` 选题
+  - 错题重做场景允许直接按 `question_ids` 选题
   - 第一阶段直接返回题目列表，由前端完成顺序练习流程
 - `practice-service /api/miniapp/practice/answers`
   - 直接按题目 `_id` 回查 `questions`

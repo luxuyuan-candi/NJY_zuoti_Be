@@ -25,7 +25,7 @@ https://www.njwjxy.cn:30443
 | practice-service | POST | `/api/miniapp/practice/answers` | 提交练习答案 |
 | practice-service | POST | `/api/miniapp/records` | 持久化保存一条已完成练习记录 |
 | practice-service | GET | `/api/miniapp/records` | 记录页统计和最近练习 / 考试记录 |
-| practice-service | GET | `/api/miniapp/records/trends` | 正确率趋势 |
+| practice-service | GET | `/api/miniapp/records/trends` | 最近 10 次练习的正确率 / 题量趋势 |
 | practice-service | GET | `/api/miniapp/records/mistakes` | 错题本 |
 | practice-service | DELETE | `/api/miniapp/records/mistakes/{mistake_id}` | 手动移出错题本 |
 | practice-service | GET | `/api/miniapp/records/mistakes/{mistake_id}` | 错题本单题详情 |
@@ -66,6 +66,7 @@ https://www.njwjxy.cn:30443
   - `GET /api/miniapp/records/mistakes` 返回用户全量错题本，并按题目聚合 `wrongTimes`
   - 两类错题列表都支持点击进入详情页；“本次错题”详情展示用户选择，“错题本”详情不展示用户选择
   - 最近记录列表使用接口返回的 `dateTime` 字段，时间精确到分钟，并按东八区时间展示
+  - `GET /api/miniapp/records/trends` 返回最近 10 次已完成记录，包含分钟级 `dateTime`、`accuracy` 和 `questionCount`
 
 ## 小程序身份资料接口契约
 

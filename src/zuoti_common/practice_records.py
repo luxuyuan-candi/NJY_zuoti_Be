@@ -426,19 +426,24 @@ def list_practice_trends(user_id: str) -> list[dict]:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT accuracy, created_at
+                SELECT id, title, type, total_count, accuracy, created_at
                 FROM practice_records
                 WHERE user_id = %s
                 ORDER BY created_at DESC
-                LIMIT 7
+                LIMIT 10
                 """,
                 (user_id,),
             )
             rows = list(reversed(cursor.fetchall()))
     return [
         {
-            "label": _format_date(row.get("created_at"))[5:],
-            "value": max(0, min(100, int(row.get("accuracy") or 0))),
+            "id": row.get("id") or "",
+            "title": row.get("title") or "练习结果",
+            "type": row.get("type") or "练习",
+            "label": _format_datetime(row.get("created_at")),
+            "dateTime": _format_datetime(row.get("created_at")),
+            "accuracy": max(0, min(100, int(row.get("accuracy") or 0))),
+            "questionCount": max(0, int(row.get("total_count") or 0)),
         }
         for row in rows
     ]

@@ -83,24 +83,51 @@ CREATE TABLE IF NOT EXISTS papers (
 CREATE TABLE IF NOT EXISTS practice_records (
   id VARCHAR(64) PRIMARY KEY,
   user_id VARCHAR(64) NOT NULL,
-  bank_id VARCHAR(64),
-  chapter_id VARCHAR(64),
+  type VARCHAR(32) NOT NULL DEFAULT '练习',
+  title VARCHAR(255) NOT NULL,
+  bank_id VARCHAR(128),
+  chapter_key VARCHAR(512),
   total_count INT NOT NULL DEFAULT 0,
   correct_count INT NOT NULL DEFAULT 0,
+  wrong_count INT NOT NULL DEFAULT 0,
+  accuracy INT NOT NULL DEFAULT 0,
   duration_seconds INT NOT NULL DEFAULT 0,
+  details_json JSON NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_practice_user_id (user_id)
-);
+  INDEX idx_practice_user_created (user_id, created_at)
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS practice_record_questions (
+  id VARCHAR(64) PRIMARY KEY,
+  practice_record_id VARCHAR(64) NOT NULL,
+  user_id VARCHAR(64) NOT NULL,
+  question_id VARCHAR(191) NOT NULL,
+  title TEXT,
+  chapter VARCHAR(512),
+  selected_answer VARCHAR(64),
+  correct_answer VARCHAR(64),
+  is_correct BOOLEAN NOT NULL DEFAULT FALSE,
+  analysis TEXT,
+  question_type VARCHAR(64),
+  question_type_label VARCHAR(64),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_prq_record_id (practice_record_id),
+  INDEX idx_prq_user_question (user_id, question_id)
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS mistakes (
   id VARCHAR(64) PRIMARY KEY,
   user_id VARCHAR(64) NOT NULL,
-  question_id VARCHAR(64) NOT NULL,
-  correct_times INT NOT NULL DEFAULT 0,
+  question_id VARCHAR(255) NOT NULL,
+  title TEXT,
+  chapter VARCHAR(512),
+  wrong_times INT NOT NULL DEFAULT 0,
   status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+  last_wrong_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_user_question_mistake (user_id, question_id)
-);
+  UNIQUE KEY uk_user_question_mistake (user_id, question_id),
+  INDEX idx_mistake_user_status (user_id, status, last_wrong_at)
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS favorites (
   id VARCHAR(64) PRIMARY KEY,

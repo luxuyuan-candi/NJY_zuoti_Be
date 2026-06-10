@@ -23,8 +23,13 @@ https://www.njwjxy.cn:30443
 | question-service | GET | `/api/miniapp/questions/offline-packages/{bank_id}` | 离线缓存包 |
 | practice-service | POST | `/api/miniapp/practice/start` | 开始练习 |
 | practice-service | POST | `/api/miniapp/practice/answers` | 提交练习答案 |
-| practice-service | GET | `/api/miniapp/records` | 最近练习 / 考试记录 |
+| practice-service | POST | `/api/miniapp/records` | 持久化保存一条已完成练习记录 |
+| practice-service | GET | `/api/miniapp/records` | 记录页统计和最近练习 / 考试记录 |
+| practice-service | GET | `/api/miniapp/records/trends` | 正确率趋势 |
 | practice-service | GET | `/api/miniapp/records/mistakes` | 错题本 |
+| practice-service | DELETE | `/api/miniapp/records/mistakes/{mistake_id}` | 手动移出错题本 |
+| practice-service | GET | `/api/miniapp/records/{record_id}` | 单次完成记录详情 |
+| practice-service | GET | `/api/miniapp/records/{record_id}/mistakes` | 单次完成记录中的错题 |
 | practice-service | GET | `/api/miniapp/records/favorites` | 收藏题 |
 | exam-service | GET | `/api/miniapp/exams/papers` | 套卷列表 |
 | exam-service | POST | `/api/miniapp/exams/{paper_id}/start` | 开始考试 |
@@ -50,11 +55,12 @@ https://www.njwjxy.cn:30443
   - 按题目 `_id` 回查 MongoDB `questions`
   - 返回真实答案与解析
 - 记录、错题、趋势统计
-  - 当前第一阶段由小程序前端在用户点击“完成”后落本地完成记录
-  - “总做题数”“正确率”“考试数”“错题本”“趋势统计”都只基于已完成记录统计
+  - 用户点击“完成”后，小程序会调用 `POST /api/miniapp/records`，由后端将记录持久化到 MySQL
+  - “总做题数”“正确率”“考试数”“错题本”“趋势统计”都基于后端持久化记录统计
   - 正确率按总作答次数计算，不按题目去重；同一道题多次做错会累计多次错误记录
   - 当前“考试数”展示口径为完成次数，每次练习或考试点击“完成”后计一次
-  - `practice-service` 下 `/api/miniapp/records*` 仍为占位接口，后续再迁移为服务端持久化
+  - `GET /api/miniapp/records/{record_id}/mistakes` 只返回该次完成记录中的错题
+  - `GET /api/miniapp/records/mistakes` 返回用户全量错题本，并按题目聚合 `wrongTimes`
 
 ## 小程序身份资料接口契约
 

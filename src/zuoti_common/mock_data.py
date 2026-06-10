@@ -55,8 +55,8 @@ RECORDS = [
 ]
 
 MISTAKES = [
-    {"id": "m1", "title": "题库访问权限判断", "chapter": "第一章 基础概念", "correctTimes": 1},
-    {"id": "m2", "title": "离线缓存版本规则", "chapter": "第二章 业务流程", "correctTimes": 0},
+    {"id": "m1", "title": "题库访问权限判断", "chapter": "第一章 基础概念", "wrongTimes": 1},
+    {"id": "m2", "title": "离线缓存版本规则", "chapter": "第二章 业务流程", "wrongTimes": 2},
 ]
 
 FAVORITES = [

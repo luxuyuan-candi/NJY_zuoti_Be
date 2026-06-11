@@ -51,6 +51,13 @@ spec:
                 name: zuoti-content-service
                 port:
                   number: 80
+          - path: /api/miniapp/admin/content
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-content-service
+                port:
+                  number: 80
           - path: /api/admin/content
             pathType: Prefix
             backend:

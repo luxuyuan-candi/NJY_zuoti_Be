@@ -16,6 +16,9 @@ https://www.njwjxy.cn:30443
 | user-service | GET | `/api/miniapp/users` | 管理员或超级管理员查看人员列表 |
 | user-service | PUT | `/api/miniapp/users/{openid}/role` | 管理员或超级管理员配置用户角色 |
 | content-service | GET | `/api/miniapp/content/home` | 首页教学视频、推广内容、公告 |
+| content-service | GET | `/api/miniapp/content/notices/current` | 当前公告详情 |
+| content-service | GET | `/api/miniapp/admin/content/notice` | 超级管理员读取公告配置 |
+| content-service | PUT | `/api/miniapp/admin/content/notice` | 超级管理员保存公告配置 |
 | content-service | GET | `/api/miniapp/files/{file_id}` | 返回 MinIO 公开资源 URL |
 | bank-service | GET | `/api/miniapp/banks` | 已授权题库列表 |
 | bank-service | GET | `/api/miniapp/banks/{bank_id}/chapters` | 章节列表 |
@@ -53,6 +56,11 @@ https://www.njwjxy.cn:30443
   - 直接读取 MongoDB `questions`
   - 按 `knowledge.pathNames` 的叶子前层级聚合章节
   - 响应体包含 `bank` 和 `chapters`
+- 首页内容
+  - `/api/miniapp/content/home` 返回教学视频、推广卡片和当前公告
+  - 首页顶部公告条从右向左滚动当前公告内容
+  - `GET /api/miniapp/content/notices/current` 返回公告详情页使用的当前公告
+  - `GET/PUT /api/miniapp/admin/content/notice` 供超级管理员在小程序内维护首页公告标题和正文
 - `/api/miniapp/practice/start`
   - 请求体字段：`bank_id`、`chapter_key`、`count`、`order`
   - 错题重做场景可直接传 `question_ids`

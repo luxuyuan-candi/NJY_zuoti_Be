@@ -71,7 +71,7 @@ https://www.njwjxy.cn:30443
   - 收藏题在做题页通过 `POST /api/miniapp/records/favorites` 添加，通过 `DELETE /api/miniapp/records/favorites/{favorite_id}` 取消
   - `GET /api/miniapp/records/favorites` 返回用户收藏题列表，支持发起收藏题练习
   - `GET /api/miniapp/records/favorites/{favorite_id}` 返回收藏题详情，展示题干、选项、正确答案和解析
-  - 最近记录列表使用接口返回的 `dateTime` 字段，时间精确到分钟，并按东八区时间展示
+  - 最近记录列表使用接口返回的 `dateTime` 字段，时间精确到分钟，并按东八区时间展示；小程序首页只展示最近 `4` 条
   - `GET /api/miniapp/records/trends` 返回最近 10 次已完成记录，包含分钟级 `dateTime`、`accuracy` 和 `questionCount`
 - 排名
   - `GET /api/miniapp/ranking/leaderboard?scope=total|weekly` 返回正确率榜单
@@ -80,6 +80,7 @@ https://www.njwjxy.cn:30443
   - `GET /api/miniapp/ranking/me` 返回当前用户总榜排名、周榜排名和当前积分
   - 当前积分规则：收藏一次 `+1`，完成一次练习 `+10`，移出一道错题 `+3`
   - `GET /api/miniapp/ranking/medals` 返回奖牌名称、获取规则和是否已获得
+  - 小程序切换“总榜 / 周榜”时，前端在接口返回前展示加载态，不提前渲染空榜提示
 
 ## 小程序身份资料接口契约
 

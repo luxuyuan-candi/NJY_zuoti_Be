@@ -135,9 +135,13 @@ CREATE TABLE IF NOT EXISTS mistakes (
 CREATE TABLE IF NOT EXISTS favorites (
   id VARCHAR(64) PRIMARY KEY,
   user_id VARCHAR(64) NOT NULL,
-  question_id VARCHAR(64) NOT NULL,
+  question_id VARCHAR(191) NOT NULL,
+  title TEXT,
+  chapter VARCHAR(512),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uk_user_question_favorite (user_id, question_id)
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_user_question_favorite (user_id, question_id),
+  INDEX idx_favorite_user_created (user_id, created_at)
 );
 
 CREATE TABLE IF NOT EXISTS exam_records (

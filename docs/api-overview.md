@@ -30,9 +30,12 @@ https://www.njwjxy.cn:30443
 | practice-service | DELETE | `/api/miniapp/records/mistakes/{mistake_id}` | 手动移出错题本 |
 | practice-service | GET | `/api/miniapp/records/mistakes/{mistake_id}` | 错题本单题详情 |
 | practice-service | GET | `/api/miniapp/records/mistake-items/{item_id}` | 本次错题单题详情 |
+| practice-service | POST | `/api/miniapp/records/favorites` | 收藏题目 |
+| practice-service | DELETE | `/api/miniapp/records/favorites/{favorite_id}` | 取消收藏 |
 | practice-service | GET | `/api/miniapp/records/{record_id}` | 单次完成记录详情 |
 | practice-service | GET | `/api/miniapp/records/{record_id}/mistakes` | 单次完成记录中的错题 |
 | practice-service | GET | `/api/miniapp/records/favorites` | 收藏题 |
+| practice-service | GET | `/api/miniapp/records/favorites/{favorite_id}` | 收藏题单题详情 |
 | exam-service | GET | `/api/miniapp/exams/papers` | 套卷列表 |
 | exam-service | POST | `/api/miniapp/exams/{paper_id}/start` | 开始考试 |
 | exam-service | POST | `/api/miniapp/exams/{exam_record_id}/submit` | 交卷 |
@@ -65,6 +68,9 @@ https://www.njwjxy.cn:30443
   - `GET /api/miniapp/records/{record_id}/mistakes` 只返回该次完成记录中的错题
   - `GET /api/miniapp/records/mistakes` 返回用户全量错题本，并按题目聚合 `wrongTimes`
   - 两类错题列表都支持点击进入详情页；“本次错题”详情展示用户选择，“错题本”详情不展示用户选择
+  - 收藏题在做题页通过 `POST /api/miniapp/records/favorites` 添加，通过 `DELETE /api/miniapp/records/favorites/{favorite_id}` 取消
+  - `GET /api/miniapp/records/favorites` 返回用户收藏题列表，支持发起收藏题练习
+  - `GET /api/miniapp/records/favorites/{favorite_id}` 返回收藏题详情，展示题干、选项、正确答案和解析
   - 最近记录列表使用接口返回的 `dateTime` 字段，时间精确到分钟，并按东八区时间展示
   - `GET /api/miniapp/records/trends` 返回最近 10 次已完成记录，包含分钟级 `dateTime`、`accuracy` 和 `questionCount`
 

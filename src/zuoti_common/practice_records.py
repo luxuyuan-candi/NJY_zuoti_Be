@@ -103,6 +103,32 @@ def ensure_practice_schema() -> None:
             )
             cursor.execute("ALTER TABLE mistakes MODIFY COLUMN question_id VARCHAR(191) NOT NULL")
 
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS favorites (
+                  id VARCHAR(64) PRIMARY KEY,
+                  user_id VARCHAR(64) NOT NULL,
+                  question_id VARCHAR(191) NOT NULL,
+                  title TEXT,
+                  chapter VARCHAR(512),
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                  UNIQUE KEY uk_user_question_favorite (user_id, question_id),
+                  INDEX idx_favorite_user_created (user_id, created_at)
+                ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                """
+            )
+            _ensure_columns(
+                cursor,
+                "favorites",
+                {
+                    "title": "ALTER TABLE favorites ADD COLUMN title TEXT NULL AFTER question_id",
+                    "chapter": "ALTER TABLE favorites ADD COLUMN chapter VARCHAR(512) NULL AFTER title",
+                    "updated_at": "ALTER TABLE favorites ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at",
+                },
+            )
+            cursor.execute("ALTER TABLE favorites MODIFY COLUMN question_id VARCHAR(191) NOT NULL")
+
 
 def _ensure_columns(cursor, table_name: str, column_sql: dict[str, str]) -> None:
     cursor.execute(f"SHOW COLUMNS FROM {table_name}")
@@ -220,6 +246,7 @@ def get_record_dashboard(user_id: str) -> dict:
     total_correct = max(total_answered - total_wrong, 0)
     accuracy = round((total_correct / total_answered) * 100) if total_answered else 0
     mistake_count = count_active_mistakes(user_id)
+    favorite_count = count_favorites(user_id)
 
     return {
         "hasCompletedPractice": bool(records),
@@ -230,6 +257,7 @@ def get_record_dashboard(user_id: str) -> dict:
         ],
         "records": records,
         "mistakeCount": mistake_count,
+        "favoriteCount": favorite_count,
         "practiceCount": len(records),
         "examCount": len(records),
     }
@@ -360,6 +388,149 @@ def dismiss_mistake(user_id: str, mistake_id: str) -> None:
                 """,
                 (user_id, mistake_id),
             )
+
+
+def list_favorites(user_id: str) -> list[dict]:
+    ensure_practice_schema()
+    with create_mysql_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, question_id, title, chapter, created_at
+                FROM favorites
+                WHERE user_id = %s
+                ORDER BY created_at DESC, updated_at DESC
+                """,
+                (user_id,),
+            )
+            rows = cursor.fetchall()
+    return [
+        {
+            "id": row["id"],
+            "questionId": row.get("question_id") or "",
+            "title": row.get("title") or "未命名题目",
+            "chapter": row.get("chapter") or "练习题",
+            "dateTime": _format_datetime(row.get("created_at")),
+        }
+        for row in rows
+    ]
+
+
+def count_favorites(user_id: str) -> int:
+    ensure_practice_schema()
+    with create_mysql_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT COUNT(*) AS total
+                FROM favorites
+                WHERE user_id = %s
+                """,
+                (user_id,),
+            )
+            row = cursor.fetchone() or {}
+    return int(row.get("total") or 0)
+
+
+def save_favorite(user_id: str, question_id: str) -> dict:
+    ensure_practice_schema()
+    snapshot = _resolve_question_snapshot(question_id)
+    with create_mysql_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO favorites (
+                  id, user_id, question_id, title, chapter
+                ) VALUES (%s, %s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE
+                  title = VALUES(title),
+                  chapter = VALUES(chapter),
+                  updated_at = CURRENT_TIMESTAMP
+                """,
+                (
+                    f"favorite-{uuid4().hex[:20]}",
+                    user_id,
+                    question_id,
+                    snapshot["title"],
+                    snapshot["chapter"],
+                ),
+            )
+            cursor.execute(
+                """
+                SELECT id, question_id, title, chapter, created_at
+                FROM favorites
+                WHERE user_id = %s AND question_id = %s
+                """,
+                (user_id, question_id),
+            )
+            row = cursor.fetchone()
+    return {
+        "id": row["id"],
+        "questionId": row.get("question_id") or "",
+        "title": row.get("title") or snapshot["title"],
+        "chapter": row.get("chapter") or snapshot["chapter"],
+        "dateTime": _format_datetime(row.get("created_at")),
+        "favorited": True,
+    }
+
+
+def dismiss_favorite(user_id: str, favorite_id: str) -> None:
+    ensure_practice_schema()
+    with create_mysql_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                DELETE FROM favorites
+                WHERE user_id = %s AND id = %s
+                """,
+                (user_id, favorite_id),
+            )
+
+
+def get_favorite_detail(user_id: str, favorite_id: str) -> dict | None:
+    ensure_practice_schema()
+    with create_mysql_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id, question_id, title, chapter
+                FROM favorites
+                WHERE user_id = %s AND id = %s
+                """,
+                (user_id, favorite_id),
+            )
+            row = cursor.fetchone()
+    if not row:
+        return None
+    question_row = get_question_by_id(row.get("question_id") or "")
+    if question_row:
+        question = serialize_question_detail(question_row)
+    else:
+        question = {
+            "id": row.get("question_id") or "",
+            "type": "",
+            "typeLabel": "",
+            "stem": row.get("title") or "未命名题目",
+            "options": [],
+            "answer": "",
+            "analysis": "",
+            "knowledge": {},
+            "importance": None,
+        }
+    return {
+        "id": row["id"],
+        "questionId": row.get("question_id") or "",
+        "title": question.get("stem") or row.get("title") or "未命名题目",
+        "chapter": row.get("chapter") or _build_question_chapter(question.get("knowledge") or {}) or "练习题",
+        "type": question.get("type") or "",
+        "typeLabel": question.get("typeLabel") or "",
+        "stem": question.get("stem") or row.get("title") or "",
+        "options": question.get("options") or [],
+        "correctAnswer": question.get("answer") or "",
+        "analysis": question.get("analysis") or "",
+        "knowledge": question.get("knowledge") or {},
+        "importance": question.get("importance"),
+    }
 
 
 def get_record_mistake_detail(user_id: str, item_id: str) -> dict | None:
@@ -507,6 +678,26 @@ def _build_mistake_detail(
         "knowledge": question.get("knowledge") or {},
         "importance": question.get("importance"),
     }
+
+
+def _resolve_question_snapshot(question_id: str) -> dict:
+    question_row = get_question_by_id(question_id)
+    if not question_row:
+        return {
+            "title": "未命名题目",
+            "chapter": "练习题",
+        }
+    question = serialize_question_detail(question_row)
+    return {
+        "title": question.get("stem") or "未命名题目",
+        "chapter": _build_question_chapter(question.get("knowledge") or {}) or "练习题",
+    }
+
+
+def _build_question_chapter(knowledge: dict) -> str:
+    path_names = (knowledge or {}).get("pathNames") or []
+    chapter_parts = path_names[:-1] if len(path_names) > 1 else path_names
+    return " / ".join(part for part in chapter_parts if part)
 
 
 def _format_record_summary(row: dict) -> dict:

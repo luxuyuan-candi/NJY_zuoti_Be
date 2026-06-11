@@ -5,15 +5,19 @@ from pydantic import BaseModel, Field
 
 from src.zuoti_common.app import create_app
 from src.zuoti_common.practice_records import (
+    dismiss_favorite,
     dismiss_mistake,
+    get_favorite_detail,
     ensure_practice_schema,
     get_global_mistake_detail,
     get_practice_record,
     get_record_mistake_detail,
     get_record_dashboard,
+    list_favorites,
     list_global_mistakes,
     list_practice_trends,
     list_record_mistakes,
+    save_favorite,
     save_practice_record,
 )
 from src.zuoti_common.question_bank import build_practice_questions, verify_answer
@@ -60,6 +64,10 @@ class SavePracticeRecordRequest(BaseModel):
     details: list[dict] = Field(default_factory=list)
     retryConfig: dict | None = None
     questions: list[CompletedQuestionPayload] = Field(default_factory=list)
+
+
+class FavoriteRequest(BaseModel):
+    questionId: str
 
 
 @router.post("/api/miniapp/practice/start")
@@ -129,8 +137,27 @@ def trends(token: str = Depends(require_bearer_token)):
 
 
 @router.get("/api/miniapp/records/favorites")
-def favorites(_: str = Depends(require_bearer_token)):
-    return {"success": True, "data": []}
+def favorites(token: str = Depends(require_bearer_token)):
+    return {"success": True, "data": list_favorites(openid_from_token(token))}
+
+
+@router.post("/api/miniapp/records/favorites")
+def add_favorite(payload: FavoriteRequest, token: str = Depends(require_bearer_token)):
+    return {"success": True, "data": save_favorite(openid_from_token(token), payload.questionId)}
+
+
+@router.delete("/api/miniapp/records/favorites/{favorite_id}")
+def remove_favorite(favorite_id: str, token: str = Depends(require_bearer_token)):
+    dismiss_favorite(openid_from_token(token), favorite_id)
+    return {"success": True, "data": {"removed": True}}
+
+
+@router.get("/api/miniapp/records/favorites/{favorite_id}")
+def favorite_detail(favorite_id: str, token: str = Depends(require_bearer_token)):
+    detail = get_favorite_detail(openid_from_token(token), favorite_id)
+    if not detail:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="favorite not found")
+    return {"success": True, "data": detail}
 
 
 @router.get("/api/miniapp/records/{record_id}")

@@ -41,7 +41,7 @@ https://www.njwjxy.cn:30443
 | exam-service | POST | `/api/miniapp/exams/{exam_record_id}/submit` | 交卷 |
 | ranking-service | GET | `/api/miniapp/ranking/me` | 个人总榜 / 周榜排名与当前积分 |
 | ranking-service | GET | `/api/miniapp/ranking/leaderboard` | 总榜 / 周榜正确率榜单 |
-| ranking-service | GET | `/api/miniapp/ranking/medals` | 用户奖牌 |
+| ranking-service | GET | `/api/miniapp/ranking/medals` | 用户奖牌与达成状态 |
 | feedback-service | POST | `/api/miniapp/feedback` | 提交反馈 |
 
 当前题库链路实现说明：
@@ -79,6 +79,7 @@ https://www.njwjxy.cn:30443
   - 排名按正确率降序，做题数降序排序
   - `GET /api/miniapp/ranking/me` 返回当前用户总榜排名、周榜排名和当前积分
   - 当前积分规则：收藏一次 `+1`，完成一次练习 `+10`，移出一道错题 `+3`
+  - `GET /api/miniapp/ranking/medals` 返回奖牌名称、获取规则和是否已获得
 
 ## 小程序身份资料接口契约
 

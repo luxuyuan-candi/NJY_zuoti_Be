@@ -13,6 +13,38 @@ SCORE_BY_EVENT = {
     "PRACTICE_COMPLETED": 10,
     "MISTAKE_REMOVED": 3,
 }
+MEDAL_RULES = [
+    {
+        "id": "first_practice",
+        "name": "起步者",
+        "desc": "完成 1 次练习。",
+    },
+    {
+        "id": "hundred_questions",
+        "name": "百题破浪",
+        "desc": "累计做题达到 100 题。",
+    },
+    {
+        "id": "perfect_ten",
+        "name": "满分时刻",
+        "desc": "单次练习 10 题及以上且正确率达到 100%。",
+    },
+    {
+        "id": "favorite_keeper",
+        "name": "收藏管家",
+        "desc": "累计收藏 10 道题。",
+    },
+    {
+        "id": "mistake_cleaner",
+        "name": "纠错达人",
+        "desc": "累计移出 5 道错题。",
+    },
+    {
+        "id": "leaderboard_rookie",
+        "name": "榜上有名",
+        "desc": "进入总榜或周榜一次。",
+    },
+]
 
 
 def ensure_ranking_schema() -> None:
@@ -84,6 +116,22 @@ def list_leaderboard(scope: str, current_user_id: str) -> list[dict]:
         }
         for row in leaderboard
     ]
+
+
+def list_user_medals(user_id: str) -> list[dict]:
+    ensure_ranking_schema()
+    stats = _get_medal_stats(user_id)
+    medals = []
+    for rule in MEDAL_RULES:
+        achieved = _is_medal_achieved(rule["id"], stats)
+        medals.append({
+            "id": rule["id"],
+            "name": rule["name"],
+            "desc": rule["desc"],
+            "achieved": achieved,
+        })
+    medals.sort(key=lambda item: (not item["achieved"], item["name"]))
+    return medals
 
 
 def _query_leaderboard_rows(start_at: datetime | None = None) -> list[dict]:
@@ -211,3 +259,64 @@ def _current_week_start_utc() -> datetime:
     local_now = datetime.utcnow() + timedelta(hours=8)
     start_local = (local_now - timedelta(days=local_now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
     return start_local - timedelta(hours=8)
+
+
+def _get_medal_stats(user_id: str) -> dict:
+    summary = get_ranking_summary(user_id)
+    with create_mysql_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT
+                  COUNT(*) AS practice_count,
+                  COALESCE(SUM(total_count), 0) AS answered_count,
+                  COALESCE(MAX(CASE WHEN total_count >= 10 AND accuracy = 100 THEN 1 ELSE 0 END), 0) AS has_perfect_ten
+                FROM practice_records
+                WHERE user_id = %s
+                """,
+                (user_id,),
+            )
+            practice_row = cursor.fetchone() or {}
+            cursor.execute(
+                """
+                SELECT COUNT(*) AS favorite_count
+                FROM favorites
+                WHERE user_id = %s
+                """,
+                (user_id,),
+            )
+            favorite_row = cursor.fetchone() or {}
+            cursor.execute(
+                """
+                SELECT COUNT(*) AS removed_mistake_count
+                FROM ranking_score_events
+                WHERE user_id = %s AND event_type = 'MISTAKE_REMOVED'
+                """,
+                (user_id,),
+            )
+            mistake_row = cursor.fetchone() or {}
+    return {
+        "practiceCount": int(practice_row.get("practice_count") or 0),
+        "answeredCount": int(practice_row.get("answered_count") or 0),
+        "hasPerfectTen": bool(practice_row.get("has_perfect_ten")),
+        "favoriteCount": int(favorite_row.get("favorite_count") or 0),
+        "removedMistakeCount": int(mistake_row.get("removed_mistake_count") or 0),
+        "eligibleTotal": bool(summary.get("eligibleTotal")),
+        "eligibleWeekly": bool(summary.get("eligibleWeekly")),
+    }
+
+
+def _is_medal_achieved(rule_id: str, stats: dict) -> bool:
+    if rule_id == "first_practice":
+        return stats["practiceCount"] >= 1
+    if rule_id == "hundred_questions":
+        return stats["answeredCount"] >= 100
+    if rule_id == "perfect_ten":
+        return stats["hasPerfectTen"]
+    if rule_id == "favorite_keeper":
+        return stats["favoriteCount"] >= 10
+    if rule_id == "mistake_cleaner":
+        return stats["removedMistakeCount"] >= 5
+    if rule_id == "leaderboard_rookie":
+        return stats["eligibleTotal"] or stats["eligibleWeekly"]
+    return False

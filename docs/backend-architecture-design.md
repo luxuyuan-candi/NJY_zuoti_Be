@@ -396,15 +396,15 @@ zuoti
 
 职责：
 
-- 总榜。
-- 周榜。
-- 个人当前排名。
+- 总榜正确率排名。
+- 周榜正确率排名。
+- 个人当前排名与当前积分。
 - 奖牌规则计算。
 - 用户奖牌获取记录。
 
 依赖：
 
-- MySQL 保存奖牌规则、用户奖牌、排名快照。
+- MySQL 读取 `practice_records`、`users` 生成榜单；使用 `ranking_score_events` 持久化收藏 / 移除错题积分事件。
 - Redis 缓存排行榜。
 
 ### 6.9 feedback-service
@@ -459,6 +459,7 @@ zuoti
 | `medal_rules` | 奖牌规则 |
 | `user_medals` | 用户奖牌 |
 | `ranking_snapshots` | 排名快照 |
+| `ranking_score_events` | 积分事件 |
 | `feedbacks` | 用户反馈 |
 | `system_configs` | 系统配置 |
 

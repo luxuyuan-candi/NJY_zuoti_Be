@@ -144,6 +144,17 @@ CREATE TABLE IF NOT EXISTS favorites (
   INDEX idx_favorite_user_created (user_id, created_at)
 );
 
+CREATE TABLE IF NOT EXISTS ranking_score_events (
+  id VARCHAR(64) PRIMARY KEY,
+  user_id VARCHAR(64) NOT NULL,
+  event_type VARCHAR(64) NOT NULL,
+  score INT NOT NULL,
+  related_id VARCHAR(191),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_ranking_score_user_created (user_id, created_at),
+  INDEX idx_ranking_score_event_type (event_type, created_at)
+);
+
 CREATE TABLE IF NOT EXISTS exam_records (
   id VARCHAR(64) PRIMARY KEY,
   user_id VARCHAR(64) NOT NULL,

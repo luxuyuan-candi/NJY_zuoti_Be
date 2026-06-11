@@ -39,8 +39,8 @@ https://www.njwjxy.cn:30443
 | exam-service | GET | `/api/miniapp/exams/papers` | 套卷列表 |
 | exam-service | POST | `/api/miniapp/exams/{paper_id}/start` | 开始考试 |
 | exam-service | POST | `/api/miniapp/exams/{exam_record_id}/submit` | 交卷 |
-| ranking-service | GET | `/api/miniapp/ranking/me` | 个人当前排名 |
-| ranking-service | GET | `/api/miniapp/ranking/leaderboard` | 总榜 / 周榜占位数据 |
+| ranking-service | GET | `/api/miniapp/ranking/me` | 个人总榜 / 周榜排名与当前积分 |
+| ranking-service | GET | `/api/miniapp/ranking/leaderboard` | 总榜 / 周榜正确率榜单 |
 | ranking-service | GET | `/api/miniapp/ranking/medals` | 用户奖牌 |
 | feedback-service | POST | `/api/miniapp/feedback` | 提交反馈 |
 
@@ -73,6 +73,12 @@ https://www.njwjxy.cn:30443
   - `GET /api/miniapp/records/favorites/{favorite_id}` 返回收藏题详情，展示题干、选项、正确答案和解析
   - 最近记录列表使用接口返回的 `dateTime` 字段，时间精确到分钟，并按东八区时间展示
   - `GET /api/miniapp/records/trends` 返回最近 10 次已完成记录，包含分钟级 `dateTime`、`accuracy` 和 `questionCount`
+- 排名
+  - `GET /api/miniapp/ranking/leaderboard?scope=total|weekly` 返回正确率榜单
+  - 总榜、周榜都要求对应范围内做题数达到 `100` 才参与排名
+  - 排名按正确率降序，做题数降序排序
+  - `GET /api/miniapp/ranking/me` 返回当前用户总榜排名、周榜排名和当前积分
+  - 当前积分规则：收藏一次 `+1`，完成一次练习 `+10`，移出一道错题 `+3`
 
 ## 小程序身份资料接口契约
 

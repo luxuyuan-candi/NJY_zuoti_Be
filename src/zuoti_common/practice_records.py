@@ -6,9 +6,11 @@ from uuid import uuid4
 
 from .clients import create_mysql_connection
 from .question_bank import get_question_by_id, serialize_question_detail
+from .ranking import ensure_ranking_schema, record_score_event
 
 
 def ensure_practice_schema() -> None:
+    ensure_ranking_schema()
     with create_mysql_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute(
@@ -235,6 +237,7 @@ def save_practice_record(user_id: str, payload: dict) -> dict:
                     ),
                 )
 
+    record_score_event(user_id, "PRACTICE_COMPLETED", record_id)
     return get_practice_record(user_id, record_id)
 
 
@@ -388,6 +391,9 @@ def dismiss_mistake(user_id: str, mistake_id: str) -> None:
                 """,
                 (user_id, mistake_id),
             )
+            updated = cursor.rowcount
+    if updated:
+        record_score_event(user_id, "MISTAKE_REMOVED", mistake_id)
 
 
 def list_favorites(user_id: str) -> list[dict]:
@@ -439,6 +445,24 @@ def save_favorite(user_id: str, question_id: str) -> dict:
         with conn.cursor() as cursor:
             cursor.execute(
                 """
+                SELECT id, question_id, title, chapter, created_at
+                FROM favorites
+                WHERE user_id = %s AND question_id = %s
+                """,
+                (user_id, question_id),
+            )
+            existing = cursor.fetchone()
+            if existing:
+                return {
+                    "id": existing["id"],
+                    "questionId": existing.get("question_id") or "",
+                    "title": existing.get("title") or snapshot["title"],
+                    "chapter": existing.get("chapter") or snapshot["chapter"],
+                    "dateTime": _format_datetime(existing.get("created_at")),
+                    "favorited": True,
+                }
+            cursor.execute(
+                """
                 INSERT INTO favorites (
                   id, user_id, question_id, title, chapter
                 ) VALUES (%s, %s, %s, %s, %s)
@@ -464,6 +488,7 @@ def save_favorite(user_id: str, question_id: str) -> dict:
                 (user_id, question_id),
             )
             row = cursor.fetchone()
+    record_score_event(user_id, "FAVORITE_ADDED", row["id"])
     return {
         "id": row["id"],
         "questionId": row.get("question_id") or "",

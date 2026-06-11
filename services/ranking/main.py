@@ -1,26 +1,25 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from src.zuoti_common.app import create_app
+from src.zuoti_common.ranking import ensure_ranking_schema, get_ranking_summary, list_leaderboard
 from src.zuoti_common.security import require_bearer_token
+from src.zuoti_common.users import openid_from_token
+
 
 router = APIRouter()
 
 
 @router.get("/api/miniapp/ranking/me")
-def my_ranking(_: str = Depends(require_bearer_token)):
-    return {"success": True, "data": {"total": 128, "weekly": 16, "currentScore": 2680}}
+def my_ranking(token: str = Depends(require_bearer_token)):
+    return {"success": True, "data": get_ranking_summary(openid_from_token(token))}
 
 
 @router.get("/api/miniapp/ranking/leaderboard")
-def leaderboard(_: str = Depends(require_bearer_token)):
-    return {
-        "success": True,
-        "data": [
-            {"rank": 1, "name": "学习用户 A", "score": 3120},
-            {"rank": 2, "name": "学习用户 B", "score": 2980},
-            {"rank": 16, "name": "我", "score": 2680},
-        ],
-    }
+def leaderboard(
+    scope: str = Query(default="total", pattern="^(total|weekly)$"),
+    token: str = Depends(require_bearer_token),
+):
+    return {"success": True, "data": list_leaderboard(scope, openid_from_token(token))}
 
 
 @router.get("/api/miniapp/ranking/medals")
@@ -34,4 +33,5 @@ def medals(_: str = Depends(require_bearer_token)):
     }
 
 
+ensure_ranking_schema()
 app = create_app("ranking-service", [router])

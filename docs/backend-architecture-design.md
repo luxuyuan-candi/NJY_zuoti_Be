@@ -475,6 +475,8 @@ zuoti
 | --- | --- |
 | `practice_sets` | 习题集元数据，区分初级/中级/高级及导入来源 |
 | `questions` | 题目正文、选项、答案、解析 |
+| `practical_sets` | 实操题库元数据，区分五级/四级/三级及导入来源 |
+| `practical_questions` | 实操情景题、准备步骤、考核要点、评分表 |
 | `question_versions` | 题目版本快照 |
 | `offline_packages` | 离线缓存包元数据和题目集合 |
 | `bank_snapshots` | 题库发布快照 |
@@ -482,10 +484,16 @@ zuoti
 当前题库导入约定：
 
 - 理论题库导入脚本：`scripts/import_theory_xlsx_to_mongodb.py`
+- 实操题库导入脚本：`scripts/import_practical_xlsx_to_mongodb.py`
 - 源文件：`14.理论题库(1).xlsx`
 - 目标集合：
   - `practice_sets`：保存 `theory-primary`、`theory-intermediate`、`theory-advanced`
   - `questions`：保存题目正文，并通过 `practiceSetId` 关联习题集
+- 实操题库源文件：`三级试题库.xlsx`、`四级试题库.xlsx`、`五级试题库.xlsx`
+- 实操题库目标集合：
+  - `practical_sets`：保存 `practical-primary-level-5`、`practical-intermediate-level-4`、`practical-advanced-level-3`
+  - `practical_questions`：保存每个 sheet 对应的一道实操情景题，并通过 `practiceSetId` 关联实操题库
+- 实操题库不直接写入 `practice_sets/questions`，避免干扰当前面向客观题的小程序练习链路
 - `questions` 文档保留所有非空原始字段到 `rawFields`
 - 题目知识点保存到 `knowledge.pathRaw`、`knowledge.pathNames`
 - 题目重要程度保存到 `importance`

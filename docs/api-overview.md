@@ -53,10 +53,12 @@ https://www.njwjxy.cn:30443
 - `/api/miniapp/banks`
   - 直接读取 MongoDB `practice_sets`
   - 当前返回初级、中级、高级三个理论习题集
+  - `GUEST` 角色访问时返回 `403`
 - `/api/miniapp/banks/{bank_id}/chapters`
   - 直接读取 MongoDB `questions`
   - 按 `knowledge.pathNames` 的叶子前层级聚合章节
   - 响应体包含 `bank` 和 `chapters`
+  - `GUEST` 角色访问时返回 `403`
 - 首页内容
   - `/api/miniapp/content/home` 返回教学视频、推广卡片和当前公告
   - 首页顶部公告条从右向左滚动当前公告内容
@@ -75,6 +77,7 @@ https://www.njwjxy.cn:30443
 - 记录、错题、趋势统计
   - 用户点击“完成”后，小程序会调用 `POST /api/miniapp/records`，由后端将记录持久化到 MySQL
   - “总做题数”“正确率”“考试数”“错题本”“趋势统计”都基于后端持久化记录统计
+  - `GUEST` 角色不能访问练习、记录、错题、收藏、趋势和题目详情接口
   - 正确率按总作答次数计算，不按题目去重；同一道题多次做错会累计多次错误记录
   - 当前“考试数”展示口径为完成次数，每次练习或考试点击“完成”后计一次
   - `GET /api/miniapp/records/{record_id}/mistakes` 只返回该次完成记录中的错题

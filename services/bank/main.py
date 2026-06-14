@@ -7,17 +7,20 @@ from src.zuoti_common.question_bank import (
     list_practice_sets,
 )
 from src.zuoti_common.security import require_admin_token, require_bearer_token
+from src.zuoti_common.users import require_learning_access
 
 router = APIRouter()
 
 
 @router.get("/api/miniapp/banks")
-def list_banks(_: str = Depends(require_bearer_token)):
+def list_banks(token: str = Depends(require_bearer_token)):
+    require_learning_access(token)
     return {"success": True, "data": list_practice_sets()}
 
 
 @router.get("/api/miniapp/banks/{bank_id}/chapters")
-def list_chapters(bank_id: str, _: str = Depends(require_bearer_token)):
+def list_chapters(bank_id: str, token: str = Depends(require_bearer_token)):
+    require_learning_access(token)
     bank = get_practice_set(bank_id)
     if not bank:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="bank not found")

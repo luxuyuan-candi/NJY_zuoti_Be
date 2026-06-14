@@ -3,12 +3,14 @@ from fastapi import APIRouter, Depends
 from src.zuoti_common.app import create_app
 from src.zuoti_common.mock_data import PAPERS, QUESTION
 from src.zuoti_common.security import require_admin_token, require_bearer_token
+from src.zuoti_common.users import require_learning_access
 
 router = APIRouter()
 
 
 @router.get("/api/miniapp/exams/papers")
-def papers(_: str = Depends(require_bearer_token)):
+def papers(token: str = Depends(require_bearer_token)):
+    require_learning_access(token)
     return {"success": True, "data": PAPERS}
 
 
@@ -18,12 +20,14 @@ def admin_papers(_: str = Depends(require_admin_token)):
 
 
 @router.post("/api/miniapp/exams/{paper_id}/start")
-def start_exam(paper_id: str, _: str = Depends(require_bearer_token)):
+def start_exam(paper_id: str, token: str = Depends(require_bearer_token)):
+    require_learning_access(token)
     return {"success": True, "data": {"examRecordId": "exam-demo", "paperId": paper_id, "question": QUESTION}}
 
 
 @router.post("/api/miniapp/exams/{exam_record_id}/submit")
-def submit_exam(exam_record_id: str, _: str = Depends(require_bearer_token)):
+def submit_exam(exam_record_id: str, token: str = Depends(require_bearer_token)):
+    require_learning_access(token)
     return {
         "success": True,
         "data": {

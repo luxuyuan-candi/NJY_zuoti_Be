@@ -4,6 +4,7 @@ from io import BytesIO
 from urllib.parse import urlparse
 from uuid import uuid4
 
+from fastapi import HTTPException, status
 from minio.error import S3Error
 
 from .clients import create_minio_client, create_mysql_connection
@@ -69,6 +70,13 @@ def get_user_by_openid(openid: str) -> dict:
     if not user:
         return ensure_user(openid)
     return format_user(user)
+
+
+def require_learning_access(token: str) -> dict:
+    user = get_user_by_openid(openid_from_token(token))
+    if user.get("role") == "GUEST":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="guest cannot access learning content")
+    return user
 
 
 def update_user_profile(

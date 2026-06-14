@@ -18,6 +18,7 @@ TYPE_LABELS = {
     "single_choice": "单选题",
     "multiple_choice": "多选题",
     "true_false": "判断题",
+    "practical_case": "实操题",
 }
 
 
@@ -25,6 +26,18 @@ def get_question_db():
     settings = get_settings()
     client = create_mongodb_client()
     return client[settings.mongodb_database]
+
+
+def is_practical_set_id(practice_set_id: str) -> bool:
+    return (practice_set_id or "").startswith("practical-")
+
+
+def question_collection_name(practice_set_id: str) -> str:
+    return "practical_questions" if is_practical_set_id(practice_set_id) else "questions"
+
+
+def practice_set_collection_name(practice_set_id: str) -> str:
+    return "practical_sets" if is_practical_set_id(practice_set_id) else "practice_sets"
 
 
 def list_practice_sets() -> list[dict[str, Any]]:
@@ -40,6 +53,22 @@ def list_practice_sets() -> list[dict[str, Any]]:
                 "questionCount": 1,
                 "sheetName": 1,
                 "mappingWorkbook": 1,
+                "category": 1,
+            },
+        )
+    ) + list(
+        db["practical_sets"].find(
+            {"status": "ACTIVE"},
+            {
+                "_id": 1,
+                "name": 1,
+                "level": 1,
+                "levelLabel": 1,
+                "gradeLabel": 1,
+                "questionCount": 1,
+                "chapterCount": 1,
+                "sourceWorkbook": 1,
+                "category": 1,
             },
         )
     )
@@ -48,9 +77,12 @@ def list_practice_sets() -> list[dict[str, Any]]:
     return [
         {
             "id": item["_id"],
-            "type": f"{item.get('levelLabel') or ''}理论",
+            "type": f"{item.get('gradeLabel') or item.get('levelLabel') or ''}{'实操' if item.get('category') == 'PRACTICAL' else '理论'}",
             "name": item.get("name") or item["_id"],
-            "desc": f"来源于 {item.get('sheetName') or '题库导入'}，共 {item.get('questionCount') or 0} 题。",
+            "desc": (
+                f"来源于 {item.get('sourceWorkbook') or item.get('sheetName') or '题库导入'}，"
+                f"共 {item.get('questionCount') or 0} 题。"
+            ),
             "total": item.get("questionCount") or 0,
             "done": 0,
             "accuracy": 0,
@@ -60,6 +92,8 @@ def list_practice_sets() -> list[dict[str, Any]]:
             "levelLabel": item.get("levelLabel") or "",
             "sheetName": item.get("sheetName") or "",
             "mappingWorkbook": item.get("mappingWorkbook") or "",
+            "gradeLabel": item.get("gradeLabel") or "",
+            "category": item.get("category") or "THEORY",
         }
         for item in rows
     ]
@@ -67,7 +101,7 @@ def list_practice_sets() -> list[dict[str, Any]]:
 
 def get_practice_set(practice_set_id: str) -> dict[str, Any] | None:
     db = get_question_db()
-    item = db["practice_sets"].find_one({"_id": practice_set_id, "status": "ACTIVE"})
+    item = db[practice_set_collection_name(practice_set_id)].find_one({"_id": practice_set_id, "status": "ACTIVE"})
     if not item:
         return None
     return {
@@ -75,16 +109,19 @@ def get_practice_set(practice_set_id: str) -> dict[str, Any] | None:
         "name": item.get("name") or item["_id"],
         "level": item.get("level") or "",
         "levelLabel": item.get("levelLabel") or "",
+        "gradeLabel": item.get("gradeLabel") or "",
         "questionCount": item.get("questionCount") or 0,
         "sheetName": item.get("sheetName") or "",
         "mappingWorkbook": item.get("mappingWorkbook") or "",
+        "sourceWorkbook": item.get("sourceWorkbook") or "",
+        "category": item.get("category") or "THEORY",
     }
 
 
 def list_chapters(practice_set_id: str) -> list[dict[str, Any]]:
     db = get_question_db()
     rows = list(
-        db["questions"].find(
+        db[question_collection_name(practice_set_id)].find(
             {"practiceSetId": practice_set_id},
             {"knowledge.pathNames": 1},
         )
@@ -148,11 +185,14 @@ def build_practice_questions(
         "answer": 1,
         "knowledge": 1,
         "importance": 1,
+        "content": 1,
+        "category": 1,
     }
+    collection = db["practical_questions"] if (question_ids and all((question_id or "").startswith("practical-") for question_id in question_ids)) else db[question_collection_name(practice_set_id)]
 
     if question_ids:
         rows = list(
-            db["questions"].find(
+            collection.find(
                 {"_id": {"$in": question_ids}},
                 projection,
             )
@@ -161,7 +201,7 @@ def build_practice_questions(
         rows = [row_map[question_id] for question_id in question_ids if question_id in row_map]
     else:
         rows = list(
-            db["questions"].find(
+            collection.find(
                 {"practiceSetId": practice_set_id},
                 projection,
             )
@@ -191,7 +231,8 @@ def build_practice_questions(
 
 def get_question_by_id(question_id: str) -> dict[str, Any] | None:
     db = get_question_db()
-    row = db["questions"].find_one({"_id": question_id})
+    collection = db["practical_questions"] if (question_id or "").startswith("practical-") else db["questions"]
+    row = collection.find_one({"_id": question_id})
     if not row:
         return None
     return row
@@ -201,6 +242,14 @@ def verify_answer(question_id: str, answer: str) -> dict[str, Any] | None:
     row = get_question_by_id(question_id)
     if not row:
         return None
+
+    if row.get("type") == "practical_case":
+        return {
+            "questionId": question_id,
+            "correct": True,
+            "answer": "已完成",
+            "analysis": row.get("analysis"),
+        }
 
     correct_answer = row.get("answer") or ""
     normalized_received = (answer or "").strip().upper()
@@ -233,7 +282,25 @@ def list_questions(limit: int = 100) -> list[dict[str, Any]]:
         .sort("_id", 1)
         .limit(limit)
     )
-    return [serialize_question_summary(row) for row in rows]
+    practical_rows = list(
+        db["practical_questions"]
+        .find(
+            {},
+            {
+                "_id": 1,
+                "practiceSetId": 1,
+                "type": 1,
+                "typeLabel": 1,
+                "stem": 1,
+                "answer": 1,
+                "importance": 1,
+                "knowledge.pathNames": 1,
+            },
+        )
+        .sort("_id", 1)
+        .limit(limit)
+    )
+    return [serialize_question_summary(row) for row in rows + practical_rows][:limit]
 
 
 def serialize_question_summary(row: dict[str, Any]) -> dict[str, Any]:
@@ -260,6 +327,8 @@ def serialize_question_detail(row: dict[str, Any]) -> dict[str, Any]:
         "options": row.get("options") or [],
         "answer": row.get("answer") or "",
         "analysis": row.get("analysis"),
+        "content": row.get("content") or {},
+        "category": row.get("category") or "THEORY",
         "knowledge": knowledge,
         "importance": row.get("importance"),
     }
@@ -276,6 +345,8 @@ def serialize_question_for_practice(row: dict[str, Any], no: int, total: int) ->
         "stem": row.get("stem") or "",
         "options": row.get("options") or [],
         "analysis": row.get("analysis"),
+        "content": row.get("content") or {},
+        "category": row.get("category") or "THEORY",
         "knowledge": knowledge,
         "importance": row.get("importance"),
     }

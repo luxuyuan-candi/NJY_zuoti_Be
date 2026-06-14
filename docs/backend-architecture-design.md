@@ -493,7 +493,8 @@ zuoti
 - 实操题库目标集合：
   - `practical_sets`：保存 `practical-primary-level-5`、`practical-intermediate-level-4`、`practical-advanced-level-3`
   - `practical_questions`：保存每个 sheet 对应的一道实操情景题，并通过 `practiceSetId` 关联实操题库
-- 实操题库不直接写入 `practice_sets/questions`，避免干扰当前面向客观题的小程序练习链路
+- 小程序题库聚合读取 `practice_sets/questions` 与 `practical_sets/practical_questions` 两套集合
+- 实操题库不直接写入 `practice_sets/questions`，通过聚合读取方式接入，避免污染客观题集合结构
 - `questions` 文档保留所有非空原始字段到 `rawFields`
 - 题目知识点保存到 `knowledge.pathRaw`、`knowledge.pathNames`
 - 题目重要程度保存到 `importance`

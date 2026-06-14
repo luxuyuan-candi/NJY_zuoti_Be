@@ -52,10 +52,13 @@ https://www.njwjxy.cn:30443
 
 - `/api/miniapp/banks`
   - 直接读取 MongoDB `practice_sets`
+  - 同时聚合读取 `practical_sets`
   - 当前返回初级、中级、高级三个理论习题集
+  - 当前也返回五级、四级、三级三套实操题库
   - `GUEST` 角色访问时返回 `403`
 - `/api/miniapp/banks/{bank_id}/chapters`
   - 直接读取 MongoDB `questions`
+  - 实操题库场景读取 `practical_questions`
   - 按 `knowledge.pathNames` 的叶子前层级聚合章节
   - 响应体包含 `bank` 和 `chapters`
   - `GUEST` 角色访问时返回 `403`
@@ -71,6 +74,7 @@ https://www.njwjxy.cn:30443
   - 请求体字段：`bank_id`、`chapter_key`、`count`、`order`
   - 错题重做场景可直接传 `question_ids`
   - 直接从 MongoDB `questions` 返回真实练习题列表
+  - 实操题库场景直接从 `practical_questions` 返回实操情景题内容
 - `/api/miniapp/practice/answers`
   - 按题目 `_id` 回查 MongoDB `questions`
   - 返回真实答案与解析

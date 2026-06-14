@@ -18,12 +18,12 @@ from pymongo.collection import Collection
 
 
 WORKBOOK_CONFIG = {
-    "五级试题库.xlsx": {
-        "practice_set_id": "practical-primary-level-5",
-        "practice_set_name": "五级实操题库",
+    "三级试题库.xlsx": {
+        "practice_set_id": "practical-primary-level-3",
+        "practice_set_name": "三级实操题库",
         "level": "PRIMARY",
         "level_label": "初级",
-        "grade_label": "五级",
+        "grade_label": "三级",
     },
     "四级试题库.xlsx": {
         "practice_set_id": "practical-intermediate-level-4",
@@ -32,12 +32,12 @@ WORKBOOK_CONFIG = {
         "level_label": "中级",
         "grade_label": "四级",
     },
-    "三级试题库.xlsx": {
-        "practice_set_id": "practical-advanced-level-3",
-        "practice_set_name": "三级实操题库",
+    "五级试题库.xlsx": {
+        "practice_set_id": "practical-advanced-level-5",
+        "practice_set_name": "五级实操题库",
         "level": "ADVANCED",
         "level_label": "高级",
-        "grade_label": "三级",
+        "grade_label": "五级",
     },
 }
 

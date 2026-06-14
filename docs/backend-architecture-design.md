@@ -491,7 +491,7 @@ zuoti
   - `questions`：保存题目正文，并通过 `practiceSetId` 关联习题集
 - 实操题库源文件：`三级试题库.xlsx`、`四级试题库.xlsx`、`五级试题库.xlsx`
 - 实操题库目标集合：
-  - `practical_sets`：保存 `practical-primary-level-5`、`practical-intermediate-level-4`、`practical-advanced-level-3`
+  - `practical_sets`：保存 `practical-primary-level-3`、`practical-intermediate-level-4`、`practical-advanced-level-5`
   - `practical_questions`：保存每个 sheet 对应的一道实操情景题，并通过 `practiceSetId` 关联实操题库
 - 小程序题库聚合读取 `practice_sets/questions` 与 `practical_sets/practical_questions` 两套集合
 - 实操题库不直接写入 `practice_sets/questions`，通过聚合读取方式接入，避免污染客观题集合结构

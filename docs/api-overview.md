@@ -46,6 +46,7 @@ https://www.njwjxy.cn:30443
 | ranking-service | GET | `/api/miniapp/ranking/leaderboard` | 总榜 / 周榜正确率榜单 |
 | ranking-service | GET | `/api/miniapp/ranking/medals` | 用户奖牌与达成状态 |
 | feedback-service | POST | `/api/miniapp/feedback` | 提交反馈 |
+| feedback-service | GET | `/api/miniapp/admin/feedback` | 超级管理员查看反馈列表 |
 
 当前题库链路实现说明：
 
@@ -61,6 +62,9 @@ https://www.njwjxy.cn:30443
   - 首页顶部公告条从右向左滚动当前公告内容
   - `GET /api/miniapp/content/notices/current` 返回公告详情页使用的当前公告
   - `GET/PUT /api/miniapp/admin/content/notice` 供超级管理员在小程序内维护首页公告标题和正文
+- 反馈
+  - `POST /api/miniapp/feedback` 将用户反馈持久化到 MySQL `feedbacks`
+  - `GET /api/miniapp/admin/feedback` 供超级管理员在“我的”页工具区查看反馈内容
 - `/api/miniapp/practice/start`
   - 请求体字段：`bank_id`、`chapter_key`、`count`、`order`
   - 错题重做场景可直接传 `question_ids`

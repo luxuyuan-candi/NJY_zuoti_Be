@@ -163,6 +163,13 @@ spec:
                 name: zuoti-feedback-service
                 port:
                   number: 80
+          - path: /api/miniapp/admin/feedback
+            pathType: Prefix
+            backend:
+              service:
+                name: zuoti-feedback-service
+                port:
+                  number: 80
           - path: /api/admin/feedback
             pathType: Prefix
             backend:

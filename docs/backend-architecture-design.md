@@ -519,7 +519,10 @@ zuoti
   - 第一阶段直接返回题目列表，由前端完成顺序练习流程
 - `practice-service /api/miniapp/practice/answers`
   - 直接按题目 `_id` 回查 `questions`
-  - 返回真实答案与解析
+  - 客观题直接返回真实答案与解析
+  - 实操题改造成简答题后，按 `practical_questions.content` 中提取的“核心要点”调用 DeepSeek 进行判题
+  - 判题时过滤着装、态度、语言礼仪类软性要求，只保留真实业务知识点
+  - AI 返回 `correct`、参考要点和解析，前端据此展示“正确 / 需改进”和参考答案
 - 记录页当前实现
   - 小程序在用户点击“完成”后调用 `practice-service /api/miniapp/records`
   - 后端将完成记录持久化到 `practice_records` 和 `practice_record_questions`
@@ -530,6 +533,16 @@ zuoti
   - 两类错题都提供详情接口，统一返回题干、选项、用户选择、正确答案和解析
   - 收藏题通过 `favorites` 表持久化，支持做题页即时收藏 / 取消收藏、收藏题列表、收藏题详情和收藏题专项练习
   - 趋势接口返回最近 10 次已完成记录的分钟级时间、正确率和题量，由前端组合为折线 + 柱状图
+  - 简答题作答文本、参考答案和 AI 解析持久化到 `practice_record_questions` 与 `mistakes`，相关字段使用 `TEXT`
+
+DeepSeek 接入约束：
+
+- API Key 只通过运行环境注入，不写入仓库。
+- 当前约定环境变量：
+  - `DEEPSEEK_API_KEY`
+  - `DEEPSEEK_BASE_URL`，默认 `https://api.deepseek.com`
+  - `DEEPSEEK_MODEL`，默认 `deepseek-chat`
+- 集群部署时通过 `zuoti-app-secret` 注入到后端容器。
 
 ### 7.3 Redis Key 建议
 

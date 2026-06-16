@@ -20,6 +20,7 @@ from src.zuoti_common.practice_records import (
     save_favorite,
     save_practice_record,
 )
+from src.zuoti_common.ai_grading import PracticalEvaluationError
 from src.zuoti_common.question_bank import build_practice_questions, verify_answer
 from src.zuoti_common.security import require_bearer_token
 from src.zuoti_common.users import openid_from_token, require_learning_access
@@ -97,7 +98,10 @@ def start_practice(payload: StartPracticeRequest, token: str = Depends(require_b
 @router.post("/api/miniapp/practice/answers")
 def submit_answer(payload: SubmitAnswerRequest, token: str = Depends(require_bearer_token)):
     require_learning_access(token)
-    result = verify_answer(payload.question_id, payload.answer)
+    try:
+        result = verify_answer(payload.question_id, payload.answer)
+    except PracticalEvaluationError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
     if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="question not found")
     return {"success": True, "data": result}

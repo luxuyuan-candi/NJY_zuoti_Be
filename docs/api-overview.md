@@ -74,10 +74,13 @@ https://www.njwjxy.cn:30443
   - 请求体字段：`bank_id`、`chapter_key`、`count`、`order`
   - 错题重做场景可直接传 `question_ids`
   - 直接从 MongoDB `questions` 返回真实练习题列表
-  - 实操题库场景直接从 `practical_questions` 返回实操情景题内容
+  - 实操题库场景直接从 `practical_questions` 返回简答题内容
 - `/api/miniapp/practice/answers`
   - 按题目 `_id` 回查 MongoDB `questions`
-  - 返回真实答案与解析
+  - 客观题直接返回标准答案与解析
+  - 实操简答题调用 DeepSeek 接口按“核心要点”进行 AI 判题
+  - 实操题判题时忽略着装、态度、语言礼仪类要求，只判断真实知识点覆盖情况
+  - 响应中的 `answer` 为参考要点，`analysis` 为 AI 解析
 - 记录、错题、趋势统计
   - 用户点击“完成”后，小程序会调用 `POST /api/miniapp/records`，由后端将记录持久化到 MySQL
   - “总做题数”“正确率”“考试数”“错题本”“趋势统计”都基于后端持久化记录统计
@@ -92,6 +95,7 @@ https://www.njwjxy.cn:30443
   - `GET /api/miniapp/records/favorites/{favorite_id}` 返回收藏题详情，展示题干、选项、正确答案和解析
   - 最近记录列表使用接口返回的 `dateTime` 字段，时间精确到分钟，并按东八区时间展示；小程序首页只展示最近 `4` 条
   - `GET /api/miniapp/records/trends` 返回最近 10 次已完成记录，包含分钟级 `dateTime`、`accuracy` 和 `questionCount`
+  - 实操简答题的用户作答、参考要点和 AI 解析都持久化到 MySQL，避免仅保存在本地缓存
 - 排名
   - `GET /api/miniapp/ranking/leaderboard?scope=total|weekly` 返回正确率榜单
   - 总榜、周榜都要求对应范围内做题数达到 `100` 才参与排名

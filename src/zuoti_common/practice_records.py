@@ -104,6 +104,10 @@ def ensure_practice_schema() -> None:
                 },
             )
             cursor.execute("ALTER TABLE mistakes MODIFY COLUMN question_id VARCHAR(191) NOT NULL")
+            cursor.execute("ALTER TABLE practice_record_questions MODIFY COLUMN selected_answer TEXT NULL")
+            cursor.execute("ALTER TABLE practice_record_questions MODIFY COLUMN correct_answer TEXT NULL")
+            cursor.execute("ALTER TABLE mistakes MODIFY COLUMN last_selected_answer TEXT NULL")
+            cursor.execute("ALTER TABLE mistakes MODIFY COLUMN correct_answer TEXT NULL")
 
             cursor.execute(
                 """
@@ -539,6 +543,7 @@ def get_favorite_detail(user_id: str, favorite_id: str) -> dict | None:
             "options": [],
             "answer": "",
             "analysis": "",
+            "content": {},
             "knowledge": {},
             "importance": None,
         }
@@ -553,6 +558,7 @@ def get_favorite_detail(user_id: str, favorite_id: str) -> dict | None:
         "options": question.get("options") or [],
         "correctAnswer": question.get("answer") or "",
         "analysis": question.get("analysis") or "",
+        "content": question.get("content") or {},
         "knowledge": question.get("knowledge") or {},
         "importance": question.get("importance"),
     }
@@ -684,6 +690,7 @@ def _build_mistake_detail(
             "options": [],
             "answer": correct_answer,
             "analysis": analysis,
+            "content": {},
             "knowledge": {},
             "importance": None,
         }
@@ -699,6 +706,7 @@ def _build_mistake_detail(
         "selectedAnswer": selected_answer,
         "correctAnswer": correct_answer or question.get("answer") or "",
         "analysis": analysis or question.get("analysis") or "",
+        "content": question.get("content") or {},
         "wrongTimes": wrong_times,
         "knowledge": question.get("knowledge") or {},
         "importance": question.get("importance"),

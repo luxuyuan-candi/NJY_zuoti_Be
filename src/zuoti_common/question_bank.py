@@ -4,6 +4,7 @@ import random
 from collections import defaultdict
 from typing import Any
 
+from .ai_grading import extract_practical_core_points, format_practical_reference_answer, grade_practical_answer
 from .clients import create_mongodb_client
 from .config import get_settings
 
@@ -244,12 +245,7 @@ def verify_answer(question_id: str, answer: str) -> dict[str, Any] | None:
         return None
 
     if row.get("type") == "practical_case":
-        return {
-            "questionId": question_id,
-            "correct": True,
-            "answer": "已完成",
-            "analysis": row.get("analysis"),
-        }
+        return grade_practical_answer(row, answer)
 
     correct_answer = row.get("answer") or ""
     normalized_received = (answer or "").strip().upper()
@@ -319,15 +315,18 @@ def serialize_question_summary(row: dict[str, Any]) -> dict[str, Any]:
 
 def serialize_question_detail(row: dict[str, Any]) -> dict[str, Any]:
     knowledge = row.get("knowledge") or {}
+    answer = row.get("answer") or ""
+    if row.get("type") == "practical_case":
+        answer = format_practical_reference_answer(row)
     return {
         "id": row["_id"],
         "type": row.get("type") or "",
         "typeLabel": row.get("typeLabel") or TYPE_LABELS.get(row.get("type") or "", ""),
         "stem": row.get("stem") or "",
         "options": row.get("options") or [],
-        "answer": row.get("answer") or "",
+        "answer": answer,
         "analysis": row.get("analysis"),
-        "content": row.get("content") or {},
+        "content": _serialize_practical_content(row.get("content") or {}, row),
         "category": row.get("category") or "THEORY",
         "knowledge": knowledge,
         "importance": row.get("importance"),
@@ -345,8 +344,21 @@ def serialize_question_for_practice(row: dict[str, Any], no: int, total: int) ->
         "stem": row.get("stem") or "",
         "options": row.get("options") or [],
         "analysis": row.get("analysis"),
-        "content": row.get("content") or {},
+        "content": _serialize_practical_content(row.get("content") or {}, row),
         "category": row.get("category") or "THEORY",
         "knowledge": knowledge,
         "importance": row.get("importance"),
+    }
+
+
+def _serialize_practical_content(content: dict[str, Any], row: dict[str, Any]) -> dict[str, Any]:
+    if row.get("type") != "practical_case":
+        return content
+    return {
+        "preparation": content.get("preparation") or None,
+        "steps": content.get("steps") or None,
+        "notes": content.get("notes") or None,
+        "materialsRows": content.get("materialsRows") or [],
+        "corePoints": extract_practical_core_points(row),
+        "answerPrompt": "请围绕题目涉及的核心业务知识点作答，不需要描述着装、态度和语言礼仪。",
     }

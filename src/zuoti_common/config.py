@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     minio_access_key: str = ""
     minio_secret_key: str = ""
 
+    deepseek_api_key: str = ""
+    deepseek_base_url: str = "https://api.deepseek.com"
+    deepseek_model: str = "deepseek-chat"
+
 
 @lru_cache
 def get_settings() -> Settings:

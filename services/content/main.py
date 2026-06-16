@@ -101,6 +101,35 @@ def build_ebook_promotions() -> list[dict]:
     ]
 
 
+def build_home_videos() -> list[dict]:
+    return [
+        {
+            "id": "video-01",
+            "title": "题库练习导览",
+            "desc": "快速了解题库、章节和随机练习的使用路径。",
+            "duration": "00:16",
+            "url": asset_url("public-assets/video/home-video-01-guide.mp4"),
+            "coverUrl": asset_url("public-assets/images/home-video-01-guide.jpg"),
+        },
+        {
+            "id": "video-02",
+            "title": "错题复盘与记录统计",
+            "desc": "查看错题本、最近记录和趋势统计的复盘方式。",
+            "duration": "00:16",
+            "url": asset_url("public-assets/video/home-video-02-practice.mp4"),
+            "coverUrl": asset_url("public-assets/images/home-video-02-practice.jpg"),
+        },
+        {
+            "id": "video-03",
+            "title": "教材学习与资料查看",
+            "desc": "在首页查看电子教材，并结合练习完成知识巩固。",
+            "duration": "00:15",
+            "url": asset_url("public-assets/video/home-video-03-ebook.mp4"),
+            "coverUrl": asset_url("public-assets/images/home-video-03-ebook.jpg"),
+        },
+    ]
+
+
 def ensure_content_schema() -> None:
     with create_mysql_connection() as conn:
         with conn.cursor() as cursor:
@@ -186,15 +215,12 @@ def require_super_admin_user(token: str) -> dict:
 @router.get("/api/miniapp/content/home")
 def home_content():
     notice = get_notice_config()
+    videos = build_home_videos()
     return {
         "success": True,
         "data": {
-            "video": {
-                "title": "南检院学习导览",
-                "duration": "08:32",
-                "url": asset_url("public-assets/video/zuoti-guide.mp4"),
-                "coverUrl": asset_url("public-assets/images/video-cover.png"),
-            },
+            "video": videos[0],
+            "videos": videos,
             "promotions": build_ebook_promotions(),
             "notices": [notice],
         },

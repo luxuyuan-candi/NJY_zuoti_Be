@@ -64,6 +64,7 @@ https://www.njwjxy.cn:30443
   - `GUEST` 角色访问时返回 `403`
 - 首页内容
   - `/api/miniapp/content/home` 返回教学视频、推广卡片和当前公告
+  - 当前教学视频区域返回 `videos` 数组，首页顶部以轮播图展示 3 个教学短视频专题
   - 当前“学习推广”返回 7 本电子教材，卡片字段包含 `fileUrl`、`fileName`、`fileType`
   - 小程序点击教材卡片后，通过 `wx.downloadFile + wx.openDocument` 在线查看 PDF
   - 首页顶部公告条从右向左滚动当前公告内容

@@ -30,6 +30,7 @@ https://www.njwjxy.cn:30443
 | practice-service | GET | `/api/miniapp/records` | 记录页统计和最近练习 / 考试记录 |
 | practice-service | GET | `/api/miniapp/records/trends` | 最近 10 次练习的正确率 / 题量趋势 |
 | practice-service | GET | `/api/miniapp/records/mistakes` | 错题本 |
+| practice-service | DELETE | `/api/miniapp/records/mistakes` | 一键移除全部错题 |
 | practice-service | DELETE | `/api/miniapp/records/mistakes/{mistake_id}` | 手动移出错题本 |
 | practice-service | GET | `/api/miniapp/records/mistakes/{mistake_id}` | 错题本单题详情 |
 | practice-service | GET | `/api/miniapp/records/mistake-items/{item_id}` | 本次错题单题详情 |

@@ -400,6 +400,36 @@ def dismiss_mistake(user_id: str, mistake_id: str) -> None:
         record_score_event(user_id, "MISTAKE_REMOVED", mistake_id)
 
 
+def dismiss_all_mistakes(user_id: str) -> int:
+    ensure_practice_schema()
+    with create_mysql_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT id
+                FROM mistakes
+                WHERE user_id = %s AND status = 'ACTIVE'
+                """,
+                (user_id,),
+            )
+            rows = cursor.fetchall()
+            mistake_ids = [row["id"] for row in rows if row.get("id")]
+            if not mistake_ids:
+                return 0
+            cursor.execute(
+                """
+                UPDATE mistakes
+                SET status = 'DISMISSED'
+                WHERE user_id = %s AND status = 'ACTIVE'
+                """,
+                (user_id,),
+            )
+            updated = cursor.rowcount
+    for mistake_id in mistake_ids:
+        record_score_event(user_id, "MISTAKE_REMOVED", mistake_id)
+    return updated
+
+
 def list_favorites(user_id: str) -> list[dict]:
     ensure_practice_schema()
     with create_mysql_connection() as conn:

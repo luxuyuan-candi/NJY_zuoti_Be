@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from src.zuoti_common.app import create_app
 from src.zuoti_common.practice_records import (
     dismiss_favorite,
+    dismiss_all_mistakes,
     dismiss_mistake,
     get_favorite_detail,
     ensure_practice_schema,
@@ -131,6 +132,13 @@ def remove_mistake(mistake_id: str, token: str = Depends(require_bearer_token)):
     require_learning_access(token)
     dismiss_mistake(openid_from_token(token), mistake_id)
     return {"success": True, "data": {"removed": True}}
+
+
+@router.delete("/api/miniapp/records/mistakes")
+def remove_all_mistakes(token: str = Depends(require_bearer_token)):
+    require_learning_access(token)
+    removed_count = dismiss_all_mistakes(openid_from_token(token))
+    return {"success": True, "data": {"removed": True, "removedCount": removed_count}}
 
 
 @router.get("/api/miniapp/records/mistakes/{mistake_id}")
